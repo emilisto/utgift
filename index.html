@@ -55,11 +55,26 @@
     </script>
 
     <script type="text/handlebar-template" id="expense-template">
-      <td><%= date %></td>
-      <td><%= label %></td>
-      <td><%= amount %></td>
-      <td><%= category %></td>
-      <td><%= who %></td>
+      <td rel="date">
+        <span><%= date %></span>
+        <input type="text" name="date" value="<%= date %>" />
+      </td>
+      <td>
+        <span><%= label %></span>
+        <input type="text" name="label" value="<%= label %>" />
+      </td>
+      <td>
+        <span><%= amount %></span>
+        <input type="text" name="amount" value="<%= amount %>" />
+      </td>
+      <td>
+        <span><%= category %></span>
+        <input type="text" name="category" value="<%= category %>" />
+      </td>
+      <td>
+        <span><%= who %></span>
+        <input type="text" name="who" value="<%= who %>" />
+      </td>
       <td>
         <div class="btn-group">
           <a class="btn btn-danger btn-remove" href="#">
@@ -287,8 +302,14 @@
     <script src="/assets/js/bootstrap-carousel.js"></script>
     <script src="/assets/js/bootstrap-typeahead.js"></script>
 
+    <script src="/assets/js/synapse.js"></script>
+    <script src="/assets/js/synapse/core.js"></script>
+    <script src="/assets/js/synapse/hooks/backbone-model.js"></script>
+    <script src="/assets/js/synapse/hooks/jquery.js"></script>
+
     <script src="/js/backbone.js"></script>
     <script src="/js/backbone.localStorage.js"></script>
+    <script src="/js/backbone.subset.js"></script>
     <script src="/js/backbone.subset.js"></script>
     <script src="/js/handlebars.js"></script>
     <script src="/js/backrub.js"></script>

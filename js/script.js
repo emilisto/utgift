@@ -14,20 +14,53 @@ this.ExpenseList = Backbone.Collection.extend({
 
 this.Expenses = new ExpenseList;
 
+
+Synapse.addHooks(jQueryHook, BackboneModelHook);
 this.ExpenseView = Backbone.View.extend({
   tagName: "tr",
   template: _.template( $('#expense-template').html() ),
 
   events: {
+    'click': 'toggleEdit'
   },
 
   initialize: function() {
     if(!this.model) throw "must supply model";
 
-    _.bindAll(this, 'render');
+    _.bindAll(this, 'render', 'toggleEdit', 'createSynapses');
+
+    console.log($('td[rel="date"]'));
+
+    this.model.bind('all', function(ev) {
+      console.log('model ev: %s', ev);
+    });
 
     this.render();
+    this.createSynapses();
   },
+
+  toggleEdit: function() {
+    if(!$(this.el).hasClass('editable')) {
+      $(this.el).toggleClass('editable');
+    }
+  },
+
+  createSynapses: function() {
+    var self = this;
+    var modelSynapse = Synapse(this.model);
+    _.each(['date', 'label', 'amount', 'category', 'who'], function(name) {
+      var input = $('[name=' + name + ']', self.el),
+          span = input.siblings('span');
+
+      var synapse = Synapse(input);
+      var spanSynapse = Synapse(span);
+
+      modelSynapse.observe(synapse);
+      spanSynapse.observe(synapse);
+    });
+
+  },
+
   render: function() {
     $(this.el).html( this.template(this.model.toJSON()) );
   }
@@ -60,7 +93,7 @@ this.ExpensesView = Backbone.View.extend({
   template: _.template( $('#expenses-template').html() ),
 
   events: {
-    'click th': 'sortColumn'
+    'dblclick th': 'sortColumn'
   },
 
   initialize: function() {
@@ -154,76 +187,76 @@ $(function(){
     category :  'Bikes',
     who      :  'Katie'
   });
-  Expenses.add({
-    date     :  '1 Feb',
-    label    :  'Oil',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : '3 Feb',
-    label    : 'Food',
-    amount   : 19.50,
-    category : 'Bikes',
-    who      : 'Katie'
-  });
-  Expenses.add({
-    date     :  '1 Feb',
-    label    :  'Phone',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     :  '3 Feb',
-    label    :  'Dishcloth',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
+  // Expenses.add({
+  //   date     :  '1 Feb',
+  //   label    :  'Oil',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : '3 Feb',
+  //   label    : 'Food',
+  //   amount   : 19.50,
+  //   category : 'Bikes',
+  //   who      : 'Katie'
+  // });
+  // Expenses.add({
+  //   date     :  '1 Feb',
+  //   label    :  'Phone',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     :  '3 Feb',
+  //   label    :  'Dishcloth',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
 
-  Expenses.add({
-    date     : '1 Jan',
-    label    : 'Food',
-    amount   : 90000,
-    category : 'Food',
-    who      : 'Emil'
-  });
-  Expenses.add({
-    date     :  '3 Jan',
-    label    :  'Gearshifter',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
-  Expenses.add({
-    date     :  '1 Jan',
-    label    :  'Oil',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : '3 Jan',
-    label    : 'Food',
-    amount   : 19.50,
-    category : 'Bikes',
-    who      : 'Katie'
-  });
-  Expenses.add({
-    date     :  '1 Jan',
-    label    :  'Phone',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     :  '3 Jan',
-    label    :  'Dishcloth',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
+  // Expenses.add({
+  //   date     : '1 Jan',
+  //   label    : 'Food',
+  //   amount   : 90000,
+  //   category : 'Food',
+  //   who      : 'Emil'
+  // });
+  // Expenses.add({
+  //   date     :  '3 Jan',
+  //   label    :  'Gearshifter',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
+  // Expenses.add({
+  //   date     :  '1 Jan',
+  //   label    :  'Oil',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : '3 Jan',
+  //   label    : 'Food',
+  //   amount   : 19.50,
+  //   category : 'Bikes',
+  //   who      : 'Katie'
+  // });
+  // Expenses.add({
+  //   date     :  '1 Jan',
+  //   label    :  'Phone',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     :  '3 Jan',
+  //   label    :  'Dishcloth',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
 
 });

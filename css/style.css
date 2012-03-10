@@ -15,17 +15,17 @@ tr:hover .btn-remove {
   visibility: visible;
 }
 
-td form {
+tr input {
+  display: none;
   margin: 0;
+  width: 80px;
 }
-td input {
-  margin: 0;
-  width: auto;
-}
-div.dataTables_filter {
+tr.editable span {
   display: none;
 }
-
+tr.editable input {
+  display: inline;
+}
 
 .modal {
   display: none;

@@ -1,0 +1,40 @@
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+
+.table thead th {
+  vertical-align: middle;
+}
+.table th, .table td {
+  vertical-align: middle;
+}
+tr .btn-remove {
+  visibility: hidden;
+}
+tr:hover .btn-remove {
+  visibility: visible;
+}
+
+td form {
+  margin: 0;
+}
+td input {
+  margin: 0;
+  width: auto;
+}
+div.dataTables_filter {
+  display: none;
+}
+
+
+.modal {
+  display: none;
+}
+
+#modal-add-batch textarea {
+  width: 100%;
+  height: 100px;
+}
+#modal-add-batch table {
+  width: 100%;
+}

@@ -131,20 +131,19 @@
             <div class="span2">
               <ul id="months" class="nav nav-pills nav-stacked">
                 <li class="nav-header">Month</li>
-                <li><a href="#">March</a></li>
-                <li class="active"><a href="#">February</a></li>
-                <li><a href="#">January</a></li>
+                <!-- <li><a href="#">March</a></li>-->
+                <!-- <li class="active"><a href="#">February</a></li>-->
+                <!-- <li><a href="#">January</a></li>-->
 
-                <!-- MONTHS -->
+                <% _.each(months, function(month) { %>
+                  <li><a href="#" rel="<%= month %>"><%= month %></a></li>
+                <% }); %>
               </ul>
               <ul id="categories" class="nav nav-pills nav-stacked">
                 <li class="nav-header">Categories</li>
-                <li><a href="#">Food</a></li>
-                <li><a href="#">Bikes</a></li>
-                <li><a href="#">Phone</a></li>
-                <li><a href="#">Traveling</a></li>
-
-                <!-- CATEGORIES -->
+                <% _.each(categories, function(category) { %>
+                  <li><a href="#" rel="<%= category %>"><%= category %></a></li>
+                <% }); %>
               </ul>
             </div>
             <div class="span10">
@@ -318,6 +317,7 @@
     <!-- <script src="/js/backbone.localStorage.js"></script>-->
     <script src="/js/backbone.subset.js"></script>
     <script src="/js/backbone.subset.js"></script>
+    <script src="/js/date.format.js"></script>
     <script src="/js/handlebars.js"></script>
     <script src="/js/backrub.js"></script>
     <script src="/js/script.js"></script>

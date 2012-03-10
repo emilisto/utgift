@@ -77,7 +77,7 @@ this.ExpenseView = Backbone.View.extend({
   createSynapses: function() {
     var self = this;
     var modelSynapse = Synapse(this.model);
-    _.each(['date', 'label', 'amount', 'category', 'who'], function(name) {
+    _.each(['label', 'amount', 'category', 'who'], function(name) {
       var input = $('[name=' + name + ']', self.el),
           span = input.siblings('span');
 
@@ -91,7 +91,11 @@ this.ExpenseView = Backbone.View.extend({
   },
 
   render: function() {
-    $(this.el).html( this.template(this.model.toJSON()) );
+    var json = this.model.toJSON();
+
+    var date = new Date(this.model.get('date'));
+    json.date = date.format('d mmm');
+    $(this.el).html( this.template(json) );
   }
 
 });
@@ -104,6 +108,11 @@ this.FilteredExpenses = Backbone.Subset.extend({
 
   sieve: function(model) {
     return true;
+  },
+
+  setSieve: function(fn) {
+    this.sieve = fn;
+    this.parent().reset(this.parent().toJSON());
   }
 
 });
@@ -121,7 +130,7 @@ this.ExpensesView = Backbone.View.extend({
   template: _.template( $('#expenses-template').html() ),
 
   events: {
-    'dblclick th': 'sortColumn',
+    'click th': 'sortColumn',
     'click .add-one': 'create'
   },
 
@@ -135,15 +144,9 @@ this.ExpensesView = Backbone.View.extend({
     this.realCollection = this.collection;
 
     var coll = new FilteredExpenses();
-    coll = this.realCollection;
+    coll._parent = this.realCollection;
     coll.liveupdate_keys = 'all';
     this.collection = coll;
-
-
-    // FIXME: Add filtering here
-    // expenses.sieve = function(model) {
-    //   return (model.get('who')  === 'Katie');
-    // }
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('reset', this.render);
@@ -156,12 +159,13 @@ this.ExpensesView = Backbone.View.extend({
   },
 
   create: function() {
-    var model = new Expense();
-    this.collection.add(model);
+    var model = new Expense({
+      date: new Date()
+    });
+    this.realCollection.add(model);
 
     var view = this.findView(model);
     if(view) view.edit();
-    console.log('meeee: %o', view);
   },
 
   sortColumn: function(ev) {
@@ -170,10 +174,30 @@ this.ExpensesView = Backbone.View.extend({
     var columns = [ 'date', 'label', 'amount', 'category', 'who' ];
 
     if(columns.indexOf(col) >= 0) {
-      this.realCollection.compareAttr = col;
-      this.realCollection.sort();
+      this.collection.compareAttr = col;
+      this.collection.sort();
     }
   },
+
+  showMonth: function(month) {
+    this.collection.setSieve(function(model) {
+      var _month = model.get('date').format('mmmm -yy');
+      return _month === month;
+    });
+  },
+
+  showCategory: function(category) {
+    this.collection.setSieve(function(model) {
+      return category === model.get('category');
+    });
+  },
+
+  showAll: function() {
+    this.collection.setSieve(function(model) {
+      return true;
+    });
+  },
+
 
   findView: function(model) {
     return this._views[model.cid];
@@ -199,19 +223,82 @@ this.AppView = Backbone.View.extend({
   template: _.template( $('#app-template').html() ),
 
   events: {
+    'click #months li': 'showMonth',
+    'click #categories li': 'showCategory'
   },
 
   initialize: function() {
-    _.bindAll(this, 'render');
+    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories');
 
     this.collection = Expenses;
     this.expensesView = new ExpensesView({ collection: this.collection });
 
+    this.collection.bind('add', this.refreshMonths);
+    this.collection.bind('remove', this.refreshMonths);
+    this.collection.bind('add', this.refreshCateories);
+    this.collection.bind('remove', this.refreshCateories);
+
     this.render();
   },
 
+  _months: [],
+  refreshMonths: function(model) {
+    var date = model.get('date').format('mmmm -yy');
+
+    if(this._months.indexOf(date) < 0) {
+      this._months.push(date);
+      this.render();
+    }
+
+  },
+  showMonth: function(ev) {
+    var month = $(ev.target).attr('rel');
+
+    var $li = $(ev.target).parent('li');
+
+    if($li.hasClass('active')) {
+      this.expensesView.showAll();
+      $('#months li').removeClass('active');
+    } else {
+      this.expensesView.showMonth(month);
+      $('#months li').removeClass('active');
+      $li.addClass('active');
+    }
+  },
+
+  _categories: [],
+  refreshCateories: function(model) {
+    var val = model.get('category');
+
+    if(this._categories.indexOf(val) < 0) {
+      this._categories.push(val);
+      this.render();
+    }
+
+  },
+  showCategory: function(ev) {
+    var category = $(ev.target).attr('rel');
+
+    var $li = $(ev.target).parent('li');
+
+    if($li.hasClass('active')) {
+      this.expensesView.showAll();
+      $('#categories li').removeClass('active');
+    } else {
+      this.expensesView.showCategory(category);
+      $('#categories li').removeClass('active');
+      $li.addClass('active');
+    }
+
+
+  },
+
+
   render: function() {
-    $(this.el).html( this.template( { test: 1234 } ) );
+    $(this.el).html( this.template( {
+      months: this._months,
+      categories: this._categories
+    } ) );
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
@@ -219,6 +306,14 @@ this.AppView = Backbone.View.extend({
   }
 
 });
+
+
+function random_date() {
+  // 1 Jan 2012
+  var start = 1325397600000;
+  var now = new Date().getTime();
+  return new Date(start + Math.floor( Math.random()  * (now - start) ));
+}
 
 
 $(function(){
@@ -231,42 +326,42 @@ $(function(){
   
 
   Expenses.add({
-    date     : '1 Feb',
+    date     : random_date(),
     label    : 'Food',
     amount   : 90000,
     category : 'Food',
     who      : 'Emil'
   });
   Expenses.add({
-    date     :  '3 Feb',
+    date     : random_date(),
     label    :  'Gearshifter',
     amount   :  19.50,
     category :  'Bikes',
     who      :  'Katie'
   });
   Expenses.add({
-    date     :  '1 Feb',
+    date     : random_date(),
     label    :  'Oil',
     amount   :  1234,
     category :  'Food',
     who      :  'Emil'
   });
   Expenses.add({
-    date     : '3 Feb',
+    date     : random_date(),
     label    : 'Food',
     amount   : 19.50,
     category : 'Bikes',
     who      : 'Katie'
   });
   Expenses.add({
-    date     :  '1 Feb',
+    date     : random_date(),
     label    :  'Phone',
     amount   :  1234,
     category :  'Food',
     who      :  'Emil'
   });
   Expenses.add({
-    date     :  '3 Feb',
+    date     : random_date(),
     label    :  'Dishcloth',
     amount   :  19.50,
     category :  'Bikes',
@@ -274,42 +369,42 @@ $(function(){
   });
 
   Expenses.add({
-    date     : '1 Jan',
+    date     : random_date(),
     label    : 'Food',
     amount   : 90000,
     category : 'Food',
     who      : 'Emil'
   });
   Expenses.add({
-    date     :  '3 Jan',
+    date     : random_date(),
     label    :  'Gearshifter',
     amount   :  19.50,
     category :  'Bikes',
     who      :  'Katie'
   });
   Expenses.add({
-    date     :  '1 Jan',
+    date     : random_date(),
     label    :  'Oil',
     amount   :  1234,
     category :  'Food',
     who      :  'Emil'
   });
   Expenses.add({
-    date     : '3 Jan',
+    date     : random_date(),
     label    : 'Food',
     amount   : 19.50,
     category : 'Bikes',
     who      : 'Katie'
   });
   Expenses.add({
-    date     :  '1 Jan',
+    date     : random_date(),
     label    :  'Phone',
     amount   :  1234,
     category :  'Food',
     who      :  'Emil'
   });
   Expenses.add({
-    date     :  '3 Jan',
+    date     : random_date(),
     label    :  'Dishcloth',
     amount   :  19.50,
     category :  'Bikes',

@@ -8,10 +8,10 @@ body {
 .table th, .table td {
   vertical-align: middle;
 }
-tr .btn-remove {
+tr .btn-group {
   visibility: hidden;
 }
-tr:hover .btn-remove {
+tr:hover .btn-group {
   visibility: visible;
 }
 
@@ -26,6 +26,22 @@ tr.editable span {
 tr.editable input {
   display: inline;
 }
+
+tr a.btn.btn-group {
+  display: inline;
+}
+tr a.btn.btn-success {
+  display: none;
+}
+
+tr.editable a.btn.btn-success {
+  display: inline;
+}
+tr.editable .btn-group,
+tr.editable:hover .btn-group {
+  display: none;
+}
+
 
 .modal {
   display: none;

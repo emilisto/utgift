@@ -51,7 +51,7 @@ this.ExpenseView = Backbone.View.extend({
     // });
 
     this.render();
-    this.createSynapses();
+    // this.createSynapses();
   },
 
   edit: function(ev) {
@@ -70,13 +70,34 @@ this.ExpenseView = Backbone.View.extend({
     }
   },
   save: function() {
+    var self = this;
+
+    var attrs = {};
+
+    _.each(['label', 'amount', 'category', 'who'], function(name) {
+      var input = $('[name=' + name + ']', self.el),
+          span = input.siblings('span');
+
+      $(span).html(input.val());
+      attrs[name] = input.val();
+
+    });
+
+    this.model.set(attrs);
+
     $(this.el).removeClass('editable');
-    this.model.collection.sort();
+
+    // FIXME: Fix sorting that doesn't reset the view state
+    //this.model.collection.sort();
   },
 
+  // No longer used
   createSynapses: function() {
     var self = this;
     var modelSynapse = Synapse(this.model);
+
+    var modelObservees = ['label', 'amount', 'who'];
+
     _.each(['label', 'amount', 'category', 'who'], function(name) {
       var input = $('[name=' + name + ']', self.el),
           span = input.siblings('span');
@@ -84,7 +105,11 @@ this.ExpenseView = Backbone.View.extend({
       var synapse = Synapse(input);
       var spanSynapse = Synapse(span);
 
-      modelSynapse.observe(synapse);
+      // FIXME: if category is included here, view is updated while typing,
+      // which is undesirable.
+      if(modelObservees.indexOf(name) >= 0) {
+        modelSynapse.observe(synapse);
+      }
       spanSynapse.observe(synapse);
     });
 
@@ -159,6 +184,7 @@ this.ExpensesView = Backbone.View.extend({
   },
 
   create: function() {
+    console.log('create()');
     var model = new Expense({
       date: new Date()
     });
@@ -207,7 +233,6 @@ this.ExpensesView = Backbone.View.extend({
     var view = new ExpenseView({ model: model });
     $('tbody', this.el).append(view.el);
     this._views[model.cid] = view;
-    console.log('addOne();');
   },
   addAll: function() {
     this.collection.each(this.addOne);
@@ -215,6 +240,7 @@ this.ExpensesView = Backbone.View.extend({
   render: function() {
     $(this.el).html( this.template() );
     this.addAll();
+    this.delegateEvents();
   }
 });
 
@@ -228,7 +254,7 @@ this.AppView = Backbone.View.extend({
   },
 
   initialize: function() {
-    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories');
+    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories', 'renderCategories');
 
     this.collection = Expenses;
     this.expensesView = new ExpensesView({ collection: this.collection });
@@ -237,6 +263,8 @@ this.AppView = Backbone.View.extend({
     this.collection.bind('remove', this.refreshMonths);
     this.collection.bind('add', this.refreshCateories);
     this.collection.bind('remove', this.refreshCateories);
+    this.collection.bind('change:category', this.refreshCateories);
+    this.collection.bind('change:date', this.refreshDate);
 
     this.render();
   },
@@ -265,14 +293,26 @@ this.AppView = Backbone.View.extend({
       $li.addClass('active');
     }
   },
+  renderMonths: function() {
+    var html = '<li class="nav-header">Months</li>';
+
+    _.each(this._months, function(month) {
+      html += '<li><a href="#" rel="' + month + '">' + month + '</a></li>\n';
+    });
+
+    $('ul#months', this.el).html(html);
+    this.delegateEvents();
+  },
 
   _categories: [],
   refreshCateories: function(model) {
     var val = model.get('category');
 
+    console.log('refreshCateories(): %o', arguments);
+
     if(this._categories.indexOf(val) < 0) {
       this._categories.push(val);
-      this.render();
+      this.renderCategories();
     }
 
   },
@@ -293,15 +333,27 @@ this.AppView = Backbone.View.extend({
 
   },
 
+  renderCategories: function() {
+    var html = '<li class="nav-header">Categories</li>';
+
+    _.each(this._categories, function(category) {
+      html += '<li><a href="#" rel="' + category + '">' + category + '</a></li>\n';
+    });
+
+    console.log('meeeeeep');
+    $('ul#categories', this.el).html(html);
+    this.delegateEvents();
+  },
 
   render: function() {
     $(this.el).html( this.template( {
       months: this._months,
-      categories: this._categories
     } ) );
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
+      this.renderCategories();
+      this.renderMonths();
     }, this));
   }
 

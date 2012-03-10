@@ -130,20 +130,11 @@
           <div class="row-fluid">
             <div class="span2">
               <ul id="months" class="nav nav-pills nav-stacked">
-                <li class="nav-header">Month</li>
                 <!-- <li><a href="#">March</a></li>-->
                 <!-- <li class="active"><a href="#">February</a></li>-->
                 <!-- <li><a href="#">January</a></li>-->
-
-                <% _.each(months, function(month) { %>
-                  <li><a href="#" rel="<%= month %>"><%= month %></a></li>
-                <% }); %>
               </ul>
               <ul id="categories" class="nav nav-pills nav-stacked">
-                <li class="nav-header">Categories</li>
-                <% _.each(categories, function(category) { %>
-                  <li><a href="#" rel="<%= category %>"><%= category %></a></li>
-                <% }); %>
               </ul>
             </div>
             <div class="span10">

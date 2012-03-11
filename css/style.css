@@ -58,3 +58,8 @@ tr.editable:hover .btn-group {
 #view-expenses #add.btn-group {
   margin: 10px 0px;
 }
+
+textarea#batch {
+  width: 500px;
+  height: 300px;
+}

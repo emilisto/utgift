@@ -9,7 +9,7 @@ this.Expense = Backbone.Model.extend({
   defaults: {
     date: '1 Jan',
     amount: 0,
-    who: 'Emil',
+    who: '',
     label: 'Unspecified',
     category: 'Misc'
   },
@@ -28,7 +28,6 @@ this.ExpenseList = Backbone.Collection.extend({
 
 
 this.Expenses = new ExpenseList;
-
 
 Synapse.addHooks(jQueryHook, BackboneModelHook);
 this.ExpenseView = Backbone.View.extend({
@@ -59,15 +58,19 @@ this.ExpenseView = Backbone.View.extend({
     if(!$(this.el).hasClass('editable')) {
       $(this.el).addClass('editable');
 
-      var $td;
+      var $input;
       if(ev) {
-        $td = ev.target.tagName === 'TD' ?
+        var $td = ev.target.tagName === 'TD' ?
           $(ev.target) : $(ev.target).parents('td');
-      } else {
-        $td = $('td', this.el).first();
+
+        $input = $('input', $td);
       }
 
-      $('input', $td).focus();
+      if(!$input || !$input.length) {
+        $input = $('td input', this.el).first();
+      }
+
+      $input.focus();
     }
   },
   remove: function() {
@@ -254,7 +257,8 @@ this.AppView = Backbone.View.extend({
 
   events: {
     'click #months li': 'showMonth',
-    'click #categories li': 'showCategory'
+    'click #categories li': 'showCategory',
+    'paste textarea#batch': 'batchAdd'
   },
 
   initialize: function() {
@@ -273,6 +277,16 @@ this.AppView = Backbone.View.extend({
     this.render();
   },
 
+  batchAdd: function() {
+    _.defer(_.bind(function() {
+      var str = $('textarea#batch', this.el).val();
+      var parser = new AccountParser;
+      var expenses = parser.parse(str);
+
+      this.collection.add(expenses);
+
+    }, this));
+  },
   _months: [],
   refreshMonths: function(model) {
     var date = model.get('date').format('mmmm -yy');
@@ -308,6 +322,7 @@ this.AppView = Backbone.View.extend({
     this.delegateEvents();
   },
 
+  // Make this a general mixin method
   _categories: [],
   refreshCateories: function(model) {
     var val = model.get('category');
@@ -333,8 +348,6 @@ this.AppView = Backbone.View.extend({
       $('#categories li').removeClass('active');
       $li.addClass('active');
     }
-
-
   },
 
   renderCategories: function() {

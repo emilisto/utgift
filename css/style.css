@@ -46,6 +46,12 @@ tr.editable:hover .btn-group {
 .modal {
   display: none;
 }
+#modal-add-batch.modal {
+  margin-top: -400px;
+  max-height: 750px;
+  width: 800px;
+  margin: -400px 0 0 -380px;
+}
 
 #modal-add-batch textarea {
   width: 100%;

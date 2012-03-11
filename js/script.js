@@ -135,7 +135,7 @@ this.ExpenseView = Backbone.View.extend({
 
 this.FilteredExpenses = Backbone.Subset.extend({
   parent: function() {
-    return this._parent || Expenses;
+    return this._parent;
   },
 
   sieve: function(model) {
@@ -163,7 +163,8 @@ this.ExpensesView = Backbone.View.extend({
 
   events: {
     'click th': 'sortColumn',
-    'click .add-one': 'create'
+    'click .add-one': 'create',
+    'click .add-batch': 'showAddBatch'
   },
 
   initialize: function() {
@@ -175,10 +176,10 @@ this.ExpensesView = Backbone.View.extend({
 
     this.realCollection = this.collection;
 
-    var coll = new FilteredExpenses();
-    coll._parent = this.realCollection;
-    coll.liveupdate_keys = 'all';
-    this.collection = coll;
+    this.collection = new FilteredExpenses([], {
+      parent: this.realCollection,
+      liveupdate_keys: 'all'
+    });
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('reset', this.render);
@@ -190,8 +191,11 @@ this.ExpensesView = Backbone.View.extend({
     this.render();
   },
 
+  showAddBatch: function() {
+    new AddBatchView;
+  },
+
   create: function() {
-    console.log('create()');
     var model = new Expense({
       date: new Date()
     });
@@ -237,6 +241,7 @@ this.ExpensesView = Backbone.View.extend({
   },
 
   addOne: function(model) {
+    console.log('created!');
     var view = new ExpenseView({ model: model });
     $('tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
@@ -257,8 +262,7 @@ this.AppView = Backbone.View.extend({
 
   events: {
     'click #months li': 'showMonth',
-    'click #categories li': 'showCategory',
-    'paste textarea#batch': 'batchAdd'
+    'click #categories li': 'showCategory'
   },
 
   initialize: function() {
@@ -277,16 +281,6 @@ this.AppView = Backbone.View.extend({
     this.render();
   },
 
-  batchAdd: function() {
-    _.defer(_.bind(function() {
-      var str = $('textarea#batch', this.el).val();
-      var parser = new AccountParser;
-      var expenses = parser.parse(str);
-
-      this.collection.add(expenses);
-
-    }, this));
-  },
   _months: [],
   refreshMonths: function(model) {
     var date = model.get('date').format('mmmm -yy');
@@ -376,6 +370,77 @@ this.AppView = Backbone.View.extend({
 
 });
 
+this.AddBatchView = Backbone.View.extend({
+  /*
+   * FIXME:
+   *
+   * - cleanup - memory leaks
+   * - faster adding, dont run add on each individual item
+   *
+   */
+
+  id: 'modal-add-batch',
+  className: 'modal',
+  template: _.template( $('#add-batch-template').html() ),
+
+  events: {
+    'paste textarea': 'batchAdd',
+    'click .btn': 'close'
+  },
+
+  initialize: function() {
+
+    _.bindAll(this, 'render', 'batchAdd', 'close');
+
+    this.collection = new ExpenseList;
+    this.expensesView = new ExpensesView({ collection: this.collection });
+
+
+    $(this.el).appendTo('body');
+    $(this.el).modal({ show: true });
+
+    this.render();
+
+    $('textarea', this.el).focus();
+
+
+    var view = this;
+    $(this.el).on('hidden', function() {
+      console.log('removing element');
+      $(view.el).remove();
+    });
+  },
+
+  batchAdd: function() {
+    $textarea = $('textarea', this.el);
+    _.defer(_.bind(function() {
+      var str = $textarea.val();
+      var parser = new AccountParser;
+      var expenses = parser.parse(str);
+
+      this.collection.add(expenses);
+
+      $textarea.val('');
+
+    }, this));
+  },
+
+  close: function(ev) {
+    if(ev && $(ev.target).hasClass('btn-primary')) {
+      Expenses.add(this.collection.toJSON());
+    }
+
+    $(this.el).modal('hide');
+  },
+
+  render: function() {
+    $(this.el).html( this.template() );
+
+    _.defer(_.bind(function() {
+      $('#ExpensesView', this.el).append(this.expensesView.el);
+    }, this));
+  }
+});
 
 function random_date() {
   // 1 Jan 2012
@@ -391,8 +456,7 @@ $(function(){
 
   window.app = app;
 
-  // Backrub method
-  
+  app.expensesView.showAddBatch();
 
   Expenses.add({
     date     : random_date(),

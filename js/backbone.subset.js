@@ -23,6 +23,8 @@
   Backbone.Subset = function Subset(models, options) {
     options = options || {};
 
+    if(options.parent) this._parent = options.parent;
+
     this.model = this.parent().model;
     this.comparator = this.comparator || options.comparator || this.parent().comparator;
     this.liveupdate_keys = this.liveupdate_keys || options.liveupdate_keys || 'none';

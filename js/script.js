@@ -1,5 +1,4 @@
 var happySync = function(method, model, options) {
-  console.log('meee');
   options = options || {};
   options.success = options.success || function() {};
   options.success();
@@ -39,6 +38,8 @@ this.ExpenseView = Backbone.View.extend({
   events: {
     'dblclick': 'edit',
     'click .save': 'save',
+    'click .btn-remove': 'remove',
+    'click .btn-edit': 'edit'
   },
 
   initialize: function() {
@@ -46,12 +47,12 @@ this.ExpenseView = Backbone.View.extend({
 
     _.bindAll(this, 'render', 'edit', 'save', 'createSynapses');
 
-    // this.model.bind('all', function(ev, val) {
-    //   console.log('model ev: %s', ev, val);
-    // });
+    var view = this;
+    this.model.bind('destroy', function() {
+      $(view.el).remove();
+    });
 
     this.render();
-    // this.createSynapses();
   },
 
   edit: function(ev) {
@@ -68,6 +69,9 @@ this.ExpenseView = Backbone.View.extend({
 
       $('input', $td).focus();
     }
+  },
+  remove: function() {
+    this.model.destroy();
   },
   save: function() {
     var self = this;
@@ -231,7 +235,7 @@ this.ExpensesView = Backbone.View.extend({
 
   addOne: function(model) {
     var view = new ExpenseView({ model: model });
-    $('tbody', this.el).append(view.el);
+    $('tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
   },
   addAll: function() {

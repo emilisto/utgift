@@ -54,3 +54,7 @@ tr.editable:hover .btn-group {
 #modal-add-batch table {
   width: 100%;
 }
+
+#view-expenses #add.btn-group {
+  margin: 10px 0px;
+}

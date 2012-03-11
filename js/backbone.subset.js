@@ -151,7 +151,7 @@
    * @return {Object} model
    */
   Subset._remove = function (model, options) {
-    return this.parent()._remove(model, options);
+    return this.parent().remove(model, options);
   };
 
   /**
@@ -162,7 +162,7 @@
    * @return {Object} model
    */
   Subset._removeFromSubset = function (model, options) {
-    return Backbone.Collection.prototype._remove.call(this, model, options);
+    return Backbone.Collection.prototype.remove.call(this, model, options);
   };
 
   /**

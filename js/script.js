@@ -26,9 +26,57 @@ this.ExpenseList = Backbone.Collection.extend({
   sync: happySync
 });
 
+this.FilteredExpenses = Backbone.Subset.extend({
+  initialize: function() {
+    _.bindAll(this, 'sieve', 'addSieve', 'removeSieve', 'clearSieves', 'refresh');
+
+    this._sieves = [];
+  },
+  parent: function() {
+    return this._parent;
+  },
+
+  sieve: function(model) {
+    return _.all(
+      _.map(this._sieves, function(sieve) {
+        console.log('sieve(): ' + sieve(model));
+        return sieve(model);
+      }),
+      _.identity
+    );
+  },
+
+  addSieve: function(fn) {
+    this._sieves.push(fn);
+    this.refresh();
+  },
+  removeSieve: function(fn) {
+    console.log('REMOVE SIEVE!');
+    this._sieves = _.without(this._sieves, fn);
+    this.refresh();
+  },
+  clearSieves: function() {
+    this._sieves = [];
+    this.refresh();
+  },
+
+  refresh: function() {
+    this.parent().reset(this.parent().toJSON());
+  }
+
+});
+
 
 this.Expenses = new ExpenseList;
 
+
+/*
+ * TODO:
+ *
+ *  add auto-complete suggestion in category and who
+ *
+ *
+ */
 Synapse.addHooks(jQueryHook, BackboneModelHook);
 this.ExpenseView = Backbone.View.extend({
   tagName: "tr",
@@ -38,13 +86,14 @@ this.ExpenseView = Backbone.View.extend({
     'dblclick': 'edit',
     'click .save': 'save',
     'click .btn-remove': 'remove',
-    'click .btn-edit': 'edit'
+    'click .btn-edit': 'edit',
+    'keyup input': 'keyCommand'
   },
 
   initialize: function() {
     if(!this.model) throw "must supply model";
 
-    _.bindAll(this, 'render', 'edit', 'save', 'createSynapses');
+    _.bindAll(this, 'render', 'edit', 'save', 'createSynapses', 'keyCommand');
 
     var view = this;
     this.model.bind('destroy', function() {
@@ -54,8 +103,33 @@ this.ExpenseView = Backbone.View.extend({
     this.render();
   },
 
+  keyCommand: function(ev) {
+    if(!ev) return;
+
+    /*console.log('keyCode: %d shiftKey: %o metaKey: %o',
+                ev.keyCode, ev.shiftKey, ev.metaKey);*/
+
+    var field = $(ev.target).parent('td').attr('rel');
+
+    if(
+      (ev.shiftKey && [38, 40].indexOf(ev.keyCode) >= 0) ||
+      (!ev.shiftKey && ev.keyCode === 13)
+    ) {
+      this.save();
+
+      var el = ev.keyCode === 38 ?
+        $(this.el).prev() : $(this.el).next()
+
+      if(el && el.length) $('td[rel=' + field + ']', el).dblclick();
+
+    } else if(ev.shiftKey && ev.keyCode === 13) {
+      this.save();
+    }
+  },
+
   edit: function(ev) {
     if(!$(this.el).hasClass('editable')) {
+      $(this.el).siblings().removeClass('editable');
       $(this.el).addClass('editable');
 
       var $input;
@@ -133,18 +207,81 @@ this.ExpenseView = Backbone.View.extend({
 });
 
 
-this.FilteredExpenses = Backbone.Subset.extend({
-  parent: function() {
-    return this._parent;
+this.ClassFilterView = Backbone.View.extend({
+  tagName: 'ul',
+  className: 'nav nav-pills nav-stacked',
+  events: {
+    'click li': 'clickClass'
   },
 
-  sieve: function(model) {
-    return true;
+  initialize: function(options) {
+    _.bindAll(this, 'render', 'refreshClasses', 'clickClass');
+
+    options = options || {};
+
+    if(!options.collection) throw "must supply collection";
+    this.collection = options.collection;
+
+    if(!options.attr) throw "must supply attr";
+
+    this.label = options.label || 'Filter';
+
+    var attr = this.attr = options.attr;
+    if(!_.isFunction(this.attr)) {
+      this.attr = function(model) {
+        return model.get(attr);
+      };
+    }
+
+    this._classes = [];
+    this._activeClass = null;
+
+    this.collection.bind('add', this.refreshClasses);
+    this.collection.bind('remove', this.refreshClasses);
+    this.collection.bind('change:' + attr, this.refreshClasses);
   },
 
-  setSieve: function(fn) {
-    this.sieve = fn;
-    this.parent().reset(this.parent().toJSON());
+  refreshClasses: function(model) {
+    var val = this.attr(model);
+
+    if(this._classes.indexOf(val) < 0) {
+      this._classes.push(val);
+      this.render();
+    }
+  },
+  clearSieve: function() {
+      if(this._sieveFn) this.collection.removeSieve(this._sieveFn);
+      $('li', this.el).removeClass('active');
+  },
+  clickClass: function(ev) {
+    var filterValue = $(ev.target).attr('rel');
+
+    var $li = $(ev.target).parent('li');
+
+    if($li.hasClass('active')) {
+      this.clearSieve();
+    } else {
+      var attr = this.attr;
+
+      this.clearSieve();
+      this._sieveFn = function(model) {
+        return attr(model) === filterValue;
+      };
+      this.collection.addSieve(this._sieveFn);
+      $li.addClass('active');
+    }
+  },
+
+  render: function() {
+    var html = '<li class="nav-header">' + this.label + '</li>';
+
+    _.each(this._classes, function(className) {
+      html += '<li><a href="#" rel="' + className + '">' + className + '</a></li>\n';
+    });
+
+    $(this.el).html(html);
+
+    this.delegateEvents();
   }
 
 });
@@ -162,24 +299,21 @@ this.ExpensesView = Backbone.View.extend({
   template: _.template( $('#expenses-template').html() ),
 
   events: {
-    'click th': 'sortColumn',
-    'click .add-one': 'create',
-    'click .add-batch': 'showAddBatch'
+    'click th': 'sortColumn'
   },
 
   initialize: function() {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'addAll', 'render', 'sortColumn', 'create');
+    _.bindAll(this, 'addOne', 'addAll', 'render', 'sortColumn');
 
     this._views = {};
 
-    this.realCollection = this.collection;
-
-    this.collection = new FilteredExpenses([], {
-      parent: this.realCollection,
-      liveupdate_keys: 'all'
-    });
+    // this.realCollection = this.collection;
+    // this.collection = new FilteredExpenses([], {
+    //   parent: this.realCollection,
+    //   liveupdate_keys: 'all'
+    // });
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('reset', this.render);
@@ -191,19 +325,6 @@ this.ExpensesView = Backbone.View.extend({
     this.render();
   },
 
-  showAddBatch: function() {
-    new AddBatchView;
-  },
-
-  create: function() {
-    var model = new Expense({
-      date: new Date()
-    });
-    this.realCollection.add(model);
-
-    var view = this.findView(model);
-    if(view) view.edit();
-  },
 
   sortColumn: function(ev) {
     var col = $(ev.target).parent('th').attr('rel');
@@ -241,7 +362,6 @@ this.ExpensesView = Backbone.View.extend({
   },
 
   addOne: function(model) {
-    console.log('created!');
     var view = new ExpenseView({ model: model });
     $('tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
@@ -261,25 +381,71 @@ this.AppView = Backbone.View.extend({
   template: _.template( $('#app-template').html() ),
 
   events: {
-    'click #months li': 'showMonth',
-    'click #categories li': 'showCategory'
+    // 'click #months li': 'showMonth',
+    //'click #categories li': 'showCategory',
+    'click .add-one': 'create',
+    'click .add-batch': 'showAddBatch'
   },
+
 
   initialize: function() {
-    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories', 'renderCategories');
+    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories', 'renderCategories',
+             'create', 'showAddBatch');
 
     this.collection = Expenses;
-    this.expensesView = new ExpensesView({ collection: this.collection });
+    this.filteredCollection = new FilteredExpenses([], {
+      parent: this.collection,
+      liveupdate_keys: 'all'
+    });
 
-    this.collection.bind('add', this.refreshMonths);
-    this.collection.bind('remove', this.refreshMonths);
-    this.collection.bind('add', this.refreshCateories);
-    this.collection.bind('remove', this.refreshCateories);
-    this.collection.bind('change:category', this.refreshCateories);
-    this.collection.bind('change:date', this.refreshDate);
+    this.expensesView = new ExpensesView({ collection: this.filteredCollection });
+
+    this.categoryFilter = new ClassFilterView({
+      label: 'Categories',
+      attr: 'category',
+      collection: this.filteredCollection
+    });
+
+    this.whoFilter = new ClassFilterView({
+      label: 'Who',
+      attr: 'who',
+      collection: this.filteredCollection
+    });
+
+    this.monthFilter = new ClassFilterView({
+      label: 'Months',
+      attr: function(model) {
+        return model.get('date').format('mmmm -yy');
+      },
+      collection: this.filteredCollection
+    });
+
+
+    // this.collection.bind('add', this.refreshMonths);
+    // this.collection.bind('remove', this.refreshMonths);
+    // this.collection.bind('add', this.refreshCateories);
+    // this.collection.bind('remove', this.refreshCateories);
+    // this.collection.bind('change:category', this.refreshCateories);
+    // this.collection.bind('change:date', this.refreshDate);
 
     this.render();
+
   },
+
+  showAddBatch: function() {
+    new AddBatchView;
+  },
+
+  create: function() {
+    var model = new Expense({
+      date: new Date()
+    });
+    this.collection.add(model);
+
+    var view = this.expensesView.findView(model);
+    if(view) view.edit();
+  },
+
 
   _months: [],
   refreshMonths: function(model) {
@@ -363,8 +529,11 @@ this.AppView = Backbone.View.extend({
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
-      this.renderCategories();
-      this.renderMonths();
+      $('#filters').append(this.monthFilter.el)
+      $('#filters').append(this.categoryFilter.el)
+      $('#filters').append(this.whoFilter.el)
+      //this.renderCategories();
+      //this.renderMonths();
     }, this));
   }
 
@@ -456,7 +625,7 @@ $(function(){
 
   window.app = app;
 
-  app.expensesView.showAddBatch();
+  // app.expensesView.showAddBatch();
 
   Expenses.add({
     date     : random_date(),

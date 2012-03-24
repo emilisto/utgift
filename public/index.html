@@ -90,6 +90,15 @@
 
       </td>
     </script>
+    <script type="text/handlebar-template" id="summed-expenses-template">
+      <table class="table table-striped table-bordered">
+        <tr>
+          <td>Total</td>
+          <td><%= total %></td>
+        </tr>
+      </table>
+    </script>
+
 
     <script type="text/handlebar-template" id="app-template">
       <div class="navbar navbar-fixed-top">
@@ -130,12 +139,15 @@
                 </a>
               </div>
 
+              <div id="SummedExpensesView"></div>
+
               <!-- ExpensesView goes here -->
               <div id="ExpensesView"></div>
 
 <!--
 12-03-12	12-03-11 	YUKIKOS SUSHI AB 	 	-105,00	518,65
 12-03-12	12-03-11 	ICA SUPERMARKET 	 	-23,90	623,65
+12-03-12	12-03-11 	LON 	 	23000,90	623,65
 12-03-09	12-03-09 	CAPRI 	 	-65,00	647,55
 12-03-09	12-03-09 	Mobilladdning 816694161340 	 	-200,00	712,55
 12-03-09	12-03-08 	Överföring Gym Anton 	 	500,00	912,55

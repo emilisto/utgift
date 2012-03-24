@@ -1,19 +1,20 @@
 //
 // TODO
 //
-//    * In add batch, "who" field for all added expenses
-//    * When using add batch, the line pasted should be saved with the expense,
+//    [x] Make sure +/- are interpreted correctly and shown in view as expense or income
+//    [] Make sure page doesn't scroll away when deleting something
+//    [x] Sum all posts when choosing a category
+//    [] In add batch, "who" field for all added expenses
+//    [] When using add batch, the line pasted should be saved with the expense,
 //      to avoid adding duplicates later.
-//    * Sum all posts when choosing a category
-//    * Aggregate view
-//    * Select multiple rows and change them
-//    * Clicking outside of row should cancel edit
-//    * Pagination
-//    * Search
-//    * Make sure page doesn't scroll away when deleting something
+//    [] Aggregate view
+//    [] Select multiple rows and change them
+//    [] Clicking outside of row should cancel edit
+//    [] Pagination
+//    [] Search
+//    [] Add auto-complete suggestion in category and who
 //
-//    * Don't include all deps in the repo, use npm package.json instead
-//
+//    [] Don't include all deps in the repo, use npm package.json instead
 //
 
 var express     = require('express'),
@@ -114,12 +115,13 @@ io.sockets.on('connection', function (socket) {
       var list = [];
 
       _.each(expenses, function(expense) {
+        console.log('meeeee');
         // FIXME: set toJSON() on Model object
         list.push(toJSON(expense));
       });
 
       callback(null, list);
-    });
+    }, { limit: 40 });
   });
 
   /**

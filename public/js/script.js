@@ -35,7 +35,6 @@ this.FilteredExpenses = Backbone.Subset.extend({
   sieve: function(model) {
     return _.all(
       _.map(this._sieves, function(sieve) {
-        console.log('sieve(): ' + sieve(model));
         return sieve(model);
       }),
       _.identity
@@ -47,7 +46,6 @@ this.FilteredExpenses = Backbone.Subset.extend({
     this.refresh();
   },
   removeSieve: function(fn) {
-    console.log('REMOVE SIEVE!');
     this._sieves = _.without(this._sieves, fn);
     this.refresh();
   },
@@ -62,18 +60,47 @@ this.FilteredExpenses = Backbone.Subset.extend({
 
 });
 
+this.SummedExpensesView = Backbone.View.extend({
+  template: _.template( $('#summed-expenses-template').html() ),
+
+  initialize: function() {
+    if(!this.collection) throw "must supply collection";
+
+    _.bindAll(this, 'render', 'add', 'reset', 'remove');
+
+    this._field = 'amount';
+    this._total = 0;
+
+    this.collection.bind('add', this.add);
+    this.collection.bind('remove', this.remove);
+    this.collection.bind('reset', this.reset);
+
+    this.render();
+  },
+  add: function(model) {
+    this._total += model.get(this._field);
+    this.render();
+  },
+  remove: function(model) {
+    this._total -= model.get(this._field);
+    this.render();
+  },
+  reset: function(coll) {
+    this._total = 0;
+    coll.each(this.add);
+  },
+  render: function() {
+    $(this.el).html(this.template({
+      // Round to two decimals
+      total: Math.round( this._total * 100 ) / 100
+    }));
+  }
+
+});
 
 this.Expenses = new ExpenseList;
 
 
-/*
- * TODO:
- *
- *  add auto-complete suggestion in category and who
- *
- *
- */
-Synapse.addHooks(jQueryHook, BackboneModelHook);
 this.ExpenseView = Backbone.View.extend({
   tagName: "tr",
   template: _.template( $('#expense-template').html() ),
@@ -371,6 +398,7 @@ this.AppView = Backbone.View.extend({
     });
 
     this.expensesView = new ExpensesView({ collection: this.filteredCollection });
+    this.summedView = new SummedExpensesView({ collection: this.filteredCollection });
 
     this.categoryFilter = new ClassFilterView({
       label: 'Categories',
@@ -415,6 +443,7 @@ this.AppView = Backbone.View.extend({
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
+      $('#SummedExpensesView').append(this.summedView.el);
       $('#filters').append(this.monthFilter.el)
       $('#filters').append(this.categoryFilter.el)
       $('#filters').append(this.whoFilter.el)
@@ -507,8 +536,12 @@ function random_date() {
 
 $(function(){
 
-  var socket = window.socket = io.connect('10.0.1.109');
+  var socket = window.socket = io.connect('emilisto.local');
   Expenses.fetch();
+
+  setTimeout(function() {
+    console.log(Expenses.length);
+  }, 1500);
 
   var app = new AppView();
   $('body').append(app.el);

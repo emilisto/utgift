@@ -1,6 +1,8 @@
 (function(global) {
 
-  if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
+  if (!_ && typeof require !== 'undefined') {
+    _ = require('underscore');
+  }
 
   var parseDate = function parseDate(str) {
     var parts = str.split('-');
@@ -8,15 +10,19 @@
   };
 
   var parseLine = function parseLine(line) {
-    var re = /^\s*(\d\d-\d\d-\d\d)\s+(\d\d-\d\d-\d\d)\s+([^\t]+\S)\s+(\S+)/g;
+    var re = /^\s*(\d\d-\d\d-\d\d)\s+(\d\d-\d\d-\d\d)\s+([^\t]+\S)\s+([-]?[\d\s]+,\d{2})/g;
     var matches = re.exec(line);
 
     var ret = null
     if(matches) {
+      var amount = matches[4]
+        .replace(',', '.')
+        .replace(' ', '');
+
       ret = {
         'date': this.parseDate(matches[2]),
         'label': matches[3],
-        'amount': -parseFloat(matches[4].replace(',', '.'), 10)
+        'amount': -parseFloat(amount, 10)
       }
     }
 
@@ -31,7 +37,7 @@
     _.each(lines, function(line) {
       var ret = self.parseLine(line);
       // Only return expenses
-      if(ret && ret.amount >= 0) expenses.push(ret);
+      if(ret) expenses.push(ret);
     });
 
     return expenses;

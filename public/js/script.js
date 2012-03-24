@@ -13,17 +13,20 @@ this.Expense = Backbone.Model.extend({
     label: 'Unspecified',
     category: 'Misc'
   },
-  sync: happySync
+  parse: function(data) {
+    if(data.date) data.date = new Date(data.date);
+
+    return data;
+  }
 });
 
 this.ExpenseList = Backbone.Collection.extend({
   model: Expense,
-  // localStorage: new Store("expenses"),
   compareAttr: 'date',
   comparator: function(model) {
     return model.get(this.compareAttr);
   },
-  sync: happySync
+  url: '/expenses'
 });
 
 this.FilteredExpenses = Backbone.Subset.extend({
@@ -164,7 +167,7 @@ this.ExpenseView = Backbone.View.extend({
 
     });
 
-    this.model.set(attrs);
+    this.model.save(attrs);
 
     $(this.el).removeClass('editable');
 
@@ -440,7 +443,7 @@ this.AppView = Backbone.View.extend({
     var model = new Expense({
       date: new Date()
     });
-    this.collection.add(model);
+    this.collection.create(model);
 
     var view = this.expensesView.findView(model);
     if(view) view.edit();
@@ -620,97 +623,102 @@ function random_date() {
 
 
 $(function(){
+
+  var socket = window.socket = io.connect('localhost');
+  Expenses.fetch();
+
   var app = new AppView();
   $('body').append(app.el);
+
 
   window.app = app;
 
   // app.expensesView.showAddBatch();
 
-  Expenses.add({
-    date     : random_date(),
-    label    : 'Food',
-    amount   : 90000,
-    category : 'Food',
-    who      : 'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Gearshifter',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Oil',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    : 'Food',
-    amount   : 19.50,
-    category : 'Bikes',
-    who      : 'Katie'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Phone',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Dishcloth',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    : 'Food',
+  //   amount   : 90000,
+  //   category : 'Food',
+  //   who      : 'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Gearshifter',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Oil',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    : 'Food',
+  //   amount   : 19.50,
+  //   category : 'Bikes',
+  //   who      : 'Katie'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Phone',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Dishcloth',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
 
-  Expenses.add({
-    date     : random_date(),
-    label    : 'Food',
-    amount   : 90000,
-    category : 'Food',
-    who      : 'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Gearshifter',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Oil',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    : 'Food',
-    amount   : 19.50,
-    category : 'Bikes',
-    who      : 'Katie'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Phone',
-    amount   :  1234,
-    category :  'Food',
-    who      :  'Emil'
-  });
-  Expenses.add({
-    date     : random_date(),
-    label    :  'Dishcloth',
-    amount   :  19.50,
-    category :  'Bikes',
-    who      :  'Katie'
-  });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    : 'Food',
+  //   amount   : 90000,
+  //   category : 'Food',
+  //   who      : 'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Gearshifter',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Oil',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    : 'Food',
+  //   amount   : 19.50,
+  //   category : 'Bikes',
+  //   who      : 'Katie'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Phone',
+  //   amount   :  1234,
+  //   category :  'Food',
+  //   who      :  'Emil'
+  // });
+  // Expenses.add({
+  //   date     : random_date(),
+  //   label    :  'Dishcloth',
+  //   amount   :  19.50,
+  //   category :  'Bikes',
+  //   who      :  'Katie'
+  // });
 
 });

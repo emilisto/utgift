@@ -1,3 +1,21 @@
+//
+// TODO
+//
+//    * In add batch, "who" field for all added expenses
+//    * When using add batch, the line pasted should be saved with the expense,
+//      to avoid adding duplicates later.
+//    * Sum all posts when choosing a category
+//    * Aggregate view
+//    * Select multiple rows and change them
+//    * Clicking outside of row should cancel edit
+//    * Pagination
+//    * Search
+//    * Make sure page doesn't scroll away when deleting something
+//
+//    * Don't include all deps in the repo, use npm package.json instead
+//
+//
+
 var express     = require('express'),
     socketio    = require('socket.io'),
     util        = require('util'),
@@ -154,32 +172,3 @@ io.sockets.on('connection', function (socket) {
 });
 
 app.listen(3001);
-
-//////
-// Sample bootstrap
-  function random_date() {
-    // 1 Jan 2012
-    var start = 1325397600000;
-    var now = new Date().getTime();
-    return new Date(start + Math.floor( Math.random()  * (now - start) ));
-  }
-
-  // var appModel = new models.AppModel();
-  // appModel.expenses.add({
-  //   id: 1,
-  //   date     : random_date(),
-  //   label    : 'food',
-  //   amount   : 90000,
-  //   category : 'food',
-  //   who      : 'emil'
-  // });
-  // appModel.expenses.add({
-  //   id: 2,
-  //   date     : random_date(),
-  //   label    :  'gearshifter',
-  //   amount   :  19.50,
-  //   category :  'bikes',
-  //   who      :  'katie'
-  // });
-
-

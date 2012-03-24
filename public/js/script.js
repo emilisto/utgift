@@ -1,10 +1,3 @@
-var happySync = function(method, model, options) {
-  options = options || {};
-  options.success = options.success || function() {};
-  options.success();
-};
-
-
 this.Expense = Backbone.Model.extend({
   defaults: {
     date: '1 Jan',
@@ -189,8 +182,6 @@ this.ExpenseView = Backbone.View.extend({
       var synapse = Synapse(input);
       var spanSynapse = Synapse(span);
 
-      // FIXME: if category is included here, view is updated while typing,
-      // which is undesirable.
       if(modelObservees.indexOf(name) >= 0) {
         modelSynapse.observe(synapse);
       }
@@ -218,7 +209,7 @@ this.ClassFilterView = Backbone.View.extend({
   },
 
   initialize: function(options) {
-    _.bindAll(this, 'render', 'refreshClasses', 'clickClass');
+    _.bindAll(this, 'render', 'refreshClasses', 'clickClass', 'reset');
 
     options = options || {};
 
@@ -239,9 +230,17 @@ this.ClassFilterView = Backbone.View.extend({
     this._classes = [];
     this._activeClass = null;
 
+    this.collection.bind('reset', this.reset);
     this.collection.bind('add', this.refreshClasses);
     this.collection.bind('remove', this.refreshClasses);
     this.collection.bind('change:' + attr, this.refreshClasses);
+  },
+
+  reset: function(coll) {
+    var view = this;
+    coll.each(function(model) {
+      view.refreshClasses(model);
+    });
   },
 
   refreshClasses: function(model) {
@@ -312,12 +311,6 @@ this.ExpensesView = Backbone.View.extend({
 
     this._views = {};
 
-    // this.realCollection = this.collection;
-    // this.collection = new FilteredExpenses([], {
-    //   parent: this.realCollection,
-    //   liveupdate_keys: 'all'
-    // });
-
     this.collection.bind('add', this.addOne);
     this.collection.bind('reset', this.render);
 
@@ -339,26 +332,6 @@ this.ExpensesView = Backbone.View.extend({
       this.collection.sort();
     }
   },
-
-  showMonth: function(month) {
-    this.collection.setSieve(function(model) {
-      var _month = model.get('date').format('mmmm -yy');
-      return _month === month;
-    });
-  },
-
-  showCategory: function(category) {
-    this.collection.setSieve(function(model) {
-      return category === model.get('category');
-    });
-  },
-
-  showAll: function() {
-    this.collection.setSieve(function(model) {
-      return true;
-    });
-  },
-
 
   findView: function(model) {
     return this._views[model.cid];
@@ -384,16 +357,12 @@ this.AppView = Backbone.View.extend({
   template: _.template( $('#app-template').html() ),
 
   events: {
-    // 'click #months li': 'showMonth',
-    //'click #categories li': 'showCategory',
     'click .add-one': 'create',
     'click .add-batch': 'showAddBatch'
   },
 
-
   initialize: function() {
-    _.bindAll(this, 'render', 'refreshMonths', 'refreshCateories', 'renderCategories',
-             'create', 'showAddBatch');
+    _.bindAll(this, 'render', 'create', 'showAddBatch');
 
     this.collection = Expenses;
     this.filteredCollection = new FilteredExpenses([], {
@@ -423,14 +392,6 @@ this.AppView = Backbone.View.extend({
       collection: this.filteredCollection
     });
 
-
-    // this.collection.bind('add', this.refreshMonths);
-    // this.collection.bind('remove', this.refreshMonths);
-    // this.collection.bind('add', this.refreshCateories);
-    // this.collection.bind('remove', this.refreshCateories);
-    // this.collection.bind('change:category', this.refreshCateories);
-    // this.collection.bind('change:date', this.refreshDate);
-
     this.render();
 
   },
@@ -449,94 +410,14 @@ this.AppView = Backbone.View.extend({
     if(view) view.edit();
   },
 
-
-  _months: [],
-  refreshMonths: function(model) {
-    var date = model.get('date').format('mmmm -yy');
-
-    if(this._months.indexOf(date) < 0) {
-      this._months.push(date);
-      this.render();
-    }
-
-  },
-  showMonth: function(ev) {
-    var month = $(ev.target).attr('rel');
-
-    var $li = $(ev.target).parent('li');
-
-    if($li.hasClass('active')) {
-      this.expensesView.showAll();
-      $('#months li').removeClass('active');
-    } else {
-      this.expensesView.showMonth(month);
-      $('#months li').removeClass('active');
-      $li.addClass('active');
-    }
-  },
-  renderMonths: function() {
-    var html = '<li class="nav-header">Months</li>';
-
-    _.each(this._months, function(month) {
-      html += '<li><a href="#" rel="' + month + '">' + month + '</a></li>\n';
-    });
-
-    $('ul#months', this.el).html(html);
-    this.delegateEvents();
-  },
-
-  // Make this a general mixin method
-  _categories: [],
-  refreshCateories: function(model) {
-    var val = model.get('category');
-
-    console.log('refreshCateories(): %o', arguments);
-
-    if(this._categories.indexOf(val) < 0) {
-      this._categories.push(val);
-      this.renderCategories();
-    }
-
-  },
-  showCategory: function(ev) {
-    var category = $(ev.target).attr('rel');
-
-    var $li = $(ev.target).parent('li');
-
-    if($li.hasClass('active')) {
-      this.expensesView.showAll();
-      $('#categories li').removeClass('active');
-    } else {
-      this.expensesView.showCategory(category);
-      $('#categories li').removeClass('active');
-      $li.addClass('active');
-    }
-  },
-
-  renderCategories: function() {
-    var html = '<li class="nav-header">Categories</li>';
-
-    _.each(this._categories, function(category) {
-      html += '<li><a href="#" rel="' + category + '">' + category + '</a></li>\n';
-    });
-
-    console.log('meeeeeep');
-    $('ul#categories', this.el).html(html);
-    this.delegateEvents();
-  },
-
   render: function() {
-    $(this.el).html( this.template( {
-      months: this._months,
-    } ) );
+    $(this.el).html( this.template() );
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
       $('#filters').append(this.monthFilter.el)
       $('#filters').append(this.categoryFilter.el)
       $('#filters').append(this.whoFilter.el)
-      //this.renderCategories();
-      //this.renderMonths();
     }, this));
   }
 
@@ -599,7 +480,9 @@ this.AddBatchView = Backbone.View.extend({
 
   close: function(ev) {
     if(ev && $(ev.target).hasClass('btn-primary')) {
-      Expenses.add(this.collection.toJSON());
+      this.collection.each(function(model) {
+        Expenses.create(model.toJSON());
+      });
     }
 
     $(this.el).modal('hide');
@@ -624,7 +507,7 @@ function random_date() {
 
 $(function(){
 
-  var socket = window.socket = io.connect('localhost');
+  var socket = window.socket = io.connect('10.0.1.109');
   Expenses.fetch();
 
   var app = new AppView();

@@ -36,8 +36,10 @@
     var expenses = [];
     _.each(lines, function(line) {
       var ret = self.parseLine(line);
-      // Only return expenses
-      if(ret) expenses.push(ret);
+      if(ret) {
+        ret.batch_line = line;
+        expenses.push(ret);
+      }
     });
 
     return expenses;

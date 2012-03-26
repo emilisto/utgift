@@ -2,17 +2,19 @@
 // TODO
 //
 //    [x] Make sure +/- are interpreted correctly and shown in view as expense or income
-//    [] Make sure page doesn't scroll away when deleting something
 //    [x] Sum all posts when choosing a category
-//    [] In add batch, "who" field for all added expenses
-//    [] When using add batch, the line pasted should be saved with the expense,
-//      to avoid adding duplicates later.
+//    [x] In add batch, "who" field for all added expenses
+//    [x] When using add batch, the line pasted should be saved with the expense,
+//       to avoid adding duplicates later.
+//
 //    [] Aggregate view
+//    [] Search
+//    [] Add auto-complete suggestion in category and who
+//    [] When changing category or remove something, update categories correspondingly
+//    [] Make sure page doesn't scroll away when deleting something
 //    [] Select multiple rows and change them
 //    [] Clicking outside of row should cancel edit
 //    [] Pagination
-//    [] Search
-//    [] Add auto-complete suggestion in category and who
 //
 //    [] Don't include all deps in the repo, use npm package.json instead
 //
@@ -46,6 +48,7 @@ app.get('/js/vendor.js', routes.vendorjs);
     amount: Number,
     who: String,
     label: String,
+    batch_line: String,
     category: String
   });
 

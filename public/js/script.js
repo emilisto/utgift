@@ -1,163 +1,3 @@
-/////////////////////////////
-// Models and collections
-
-this.Expense = Backbone.Model.extend({
-  defaults: {
-    date: '1 Jan',
-    amount: 0,
-    who: '',
-    label: 'Unspecified',
-    category: 'Misc'
-  },
-  parse: function(data) {
-    if(data.date) data.date = new Date(data.date);
-
-    return data;
-  }
-});
-
-this.ExpenseList = Backbone.Collection.extend({
-  model: Expense,
-  compareAttr: 'date',
-  comparator: function(model) {
-    return model.get(this.compareAttr);
-  },
-  url: '/expenses'
-});
-
-this.FilteredExpenses = Backbone.Subset.extend({
-  initialize: function() {
-    _.bindAll(this, 'sieve', 'addSieve', 'removeSieve', 'clearSieves', 'refresh');
-
-    this._sieves = [];
-  },
-  parent: function() {
-    return this._parent;
-  },
-
-  sieve: function(model) {
-    return _.all(
-      _.map(this._sieves, function(sieve) {
-        return sieve(model);
-      }),
-      _.identity
-    );
-  },
-
-  addSieve: function(fn) {
-    this._sieves.push(fn);
-    this.refresh();
-  },
-  removeSieve: function(fn) {
-    this._sieves = _.without(this._sieves, fn);
-    this.refresh();
-  },
-  clearSieves: function() {
-    this._sieves = [];
-    this.refresh();
-  },
-
-  refresh: function() {
-    this.parent().reset(this.parent().toJSON());
-  }
-
-});
-
-/////////////////////////////////////////////////////
-// Aggregate Collection
-//
-// TODO:
-//  - create filters from this idea
-//
-
-this.AggregateModel = Backbone.Model.extend({
-  initialize: function() {
-    _.bindAll(this, 'recalculate');
-  },
-  recalculate: function() {
-    var total = 0;
-    _.each(this.get('children'), function(model) {
-      total += model.get('amount');
-    });
-
-    this.set({ total: total });
-  }
-});
-
-this.AggregateCollection = Backbone.Collection.extend({
-  model: AggregateModel,
-  initialize: function(options) {
-    _.bindAll(this, '_aggrAdd', '_aggrRemove', '_aggrReset');
-
-    options = options || {};
-
-    if(!options.collection) throw "parent collection required";
-
-    this.collection = options.collection;
-    this._aggregateFields = [];
-
-    this.collection.bind('change', this._aggrChange);
-    this.collection.bind('add', this._aggrAdd);
-    this.collection.bind('remove', this._aggrRemove);
-    this.collection.bind('reset', this._aggrReset);
-  },
-
-  _aggrChange: function() {
-    console.log('_aggrChange: %o', arguments);
-  },
-  _aggrAdd: function(model) {
-    var key = this._getAggregateKey(model),
-        id = key.length > 0 ? key.join('-') : model.id,
-        aggregateModel = this.get(id);
-
-    if(!aggregateModel) {
-      aggregateModel = new AggregateModel({
-        id: id,
-        key: key,
-        children: [],
-        total: 0
-      });
-      this.add(aggregateModel);
-    }
-
-    aggregateModel.get('children').push(model);
-    aggregateModel.recalculate();
-
-    console.log('add: %s %o', id, aggregateModel);
-  },
-  _aggrRemove: function(model) {
-    var key = this._getAggregateKey(model),
-        id = key.length > 0 ? key.join('-') : model.id,
-        aggregateModel = this.get(id);
-
-    if(aggregateModel) {
-      if(aggregateModel.get('children').length <= 1) {
-        this.remove(aggregateModel);
-      }
-    }
-
-
-    console.log('remove: %s %o', id, aggregateModel);
-  },
-  _aggrReset: function(collection) {
-    this.reset();
-    this.collection.each(_.bind(this._aggrAdd, this));
-  },
-
-  setAggregateKeys: function(keys) {
-    this._aggregateFields = _.extend({}, keys);
-    this._aggrReset();
-  },
-
-  _getAggregateKey: function(model) {
-    var key = [];
-    key = _.map(this._aggregateFields, function(field) {
-      return model.get(field) || 'Unspecified';
-    });
-
-    return key;
-  }
-});
 
 /////////////////////////////
 // Views
@@ -382,6 +222,16 @@ this.ClassFilterView = Backbone.View.extend({
       this.render();
     }
   },
+  changeSieve: function(fn) {
+    var oldSieve = this._sieveFn;
+
+    this._sieveFn = fn;
+    this.collection.addSieve(fn);
+
+    // Remove sieve after new one has been applied, to avoid showing a sieveless collection shortly,
+    // in case there are many expenses.
+    if(oldSieve) this.collection.removeSieve(oldSieve);
+  },
   clearSieve: function() {
       if(this._sieveFn) this.collection.removeSieve(this._sieveFn);
       $('li', this.el).removeClass('active');
@@ -395,13 +245,15 @@ this.ClassFilterView = Backbone.View.extend({
       this.clearSieve();
     } else {
       var attr = this.attr;
-
-      this.clearSieve();
-      this._sieveFn = function(model) {
-        return attr(model) === filterValue;
-      };
-      this.collection.addSieve(this._sieveFn);
+      // this.collection.addSieve(this._sieveFn);
+      // // this.clearSieve();
+      // $li.addClass('active');
+      $('li', this.el).removeClass('active');
       $li.addClass('active');
+
+      this.changeSieve(function(model) {
+        return attr(model) === filterValue;
+      });
     }
   },
 
@@ -438,15 +290,16 @@ this.ExpensesView = Backbone.View.extend({
   initialize: function() {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'addAll', 'render', 'sortColumn');
+    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn');
 
     this._views = {};
 
     this.collection.bind('add', this.addOne);
+    this.collection.bind('remove', this.removeOne);
     this.collection.bind('reset', this.render);
 
     this.collection.bind('all', function(ev) {
-      console.log('collection ev: %s', ev);
+      // console.log('collection ev: %s', ev);
     });
 
     this.render();
@@ -478,6 +331,10 @@ this.ExpensesView = Backbone.View.extend({
     var view = new ExpenseView({ model: model });
     $('tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
+  },
+  removeOne: function(model) {
+    var view = this._views[model.cid];
+    if(view) $(view.el).remove();
   },
   addAll: function() {
     this.collection.each(this.addOne);
@@ -517,7 +374,6 @@ this.AggregatedExpenseView = Backbone.View.extend({
 
   render: function() {
     var json = this.model.toJSON();
-    console.log('json: %o', json);
     $(this.el).html( this.template(json) );
   }
 
@@ -613,38 +469,43 @@ this.AppView = Backbone.View.extend({
     _.bindAll(this, 'render', 'create', 'showAddBatch');
 
     this.collection = Expenses;
-    this.filteredCollection = new FilteredExpenses([], {
-      parent: this.collection,
-      liveupdate_keys: 'all'
+    // this.filteredCollection = new FilteredExpenses([], {
+    //   parent: this.collection,
+    //   liveupdate_keys: 'all'
+    // });
+    this.filteredExpenses = window.Filtered = new FilteredCollection([], {
+      parent: Expenses
     });
+
+    this.expensesView = new ExpensesView({ collection: this.filteredExpenses });
+
     this.aggregatedCollection = new AggregateCollection({ collection: Expenses });
     this.aggregatedCollection.setAggregateKeys(['who', 'category']);
 
-    this.expensesView = new ExpensesView({ collection: this.filteredCollection });
     this.aggregateView = new AggregatedExpensesView({ collection: this.aggregatedCollection });
-    this.summedView = new SummedExpensesView({ collection: this.filteredCollection });
+    this.summedView = new SummedExpensesView({ collection: this.filteredExpenses });
 
     window.ac = this.aggregatedCollection;
 
-    this.categoryFilter = new ClassFilterView({
-      label: 'Categories',
-      attr: 'category',
-      collection: this.filteredCollection
-    });
+    // this.categoryFilter = new ClassFilterView({
+    //   label: 'Categories',
+    //   attr: 'category',
+    //   collection: this.filteredCollection
+    // });
 
-    this.whoFilter = new ClassFilterView({
-      label: 'Who',
-      attr: 'who',
-      collection: this.filteredCollection
-    });
+    // this.whoFilter = new ClassFilterView({
+    //   label: 'Who',
+    //   attr: 'who',
+    //   collection: this.filteredCollection
+    // });
 
-    this.monthFilter = new ClassFilterView({
-      label: 'Months',
-      attr: function(model) {
-        return model.get('date').format('mmmm -yy');
-      },
-      collection: this.filteredCollection
-    });
+    // this.monthFilter = new ClassFilterView({
+    //   label: 'Months',
+    //   attr: function(model) {
+    //     return model.get('date').format('mmmm -yy');
+    //   },
+    //   collection: this.filteredCollection
+    // });
 
     this.render();
 
@@ -671,9 +532,9 @@ this.AppView = Backbone.View.extend({
       $('#ExpensesView').append(this.expensesView.el);
       $('#ExpensesView').append(this.aggregateView.el);
       $('#SummedExpensesView').append(this.summedView.el);
-      $('#filters').append(this.monthFilter.el)
-      $('#filters').append(this.categoryFilter.el)
-      $('#filters').append(this.whoFilter.el)
+      //$('#filters').append(this.monthFilter.el)
+      //$('#filters').append(this.categoryFilter.el)
+      //$('#filters').append(this.whoFilter.el)
     }, this));
   }
 
@@ -788,9 +649,22 @@ function random_date() {
 $(function(){
 
   var socket = window.socket = io.connect('emilisto.local');
-  window.Test = new AggregateCollection({ collection: Expenses });
+  // window.Test = new AggregateCollection({ collection: Expenses });
+
+  // Filtered.bind('all', function(ev) {
+  //   console.log('Filtered: %s %o', ev, arguments);
+  // });
 
   Expenses.fetch();
+  Expenses.bind('reset', function() {
+    console.log('reset!!' + this.length);
+  });
+
+  Expenses.bind('all', function(ev) {
+    if(!ev.match(/index:/)) {
+      console.log('Expenses: %s %o', ev, arguments);
+    }
+  });
 
   setTimeout(function() {
     console.log(Expenses.length);
@@ -805,3 +679,16 @@ $(function(){
   // app.showAddBatch();
 
 });
+
+window.changeit = function () {
+  function randomCategory() {
+    var categories = [ 'Mat', 'Ute', 'Transport', 'Nöje', 'Sport', 'Parkering', 'Hyra' ];
+    var index = Math.min(categories.length - 1, Math.floor(Math.random() * categories.length));
+    return categories[index];
+  }
+
+  Expenses.each(function(model) {
+    console.log(model);
+    model.save({ category: randomCategory() });
+  });
+}

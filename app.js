@@ -7,6 +7,7 @@
 //    [x] When using add batch, the line pasted should be saved with the expense,
 //       to avoid adding duplicates later.
 //
+//    [] Pagination: Limit no. of items that can be shown in collection view, and have a link to display more
 //    [] Aggregate view
 //    [] Search
 //    [] Add auto-complete suggestion in category and who
@@ -14,7 +15,6 @@
 //    [] Make sure page doesn't scroll away when deleting something
 //    [] Select multiple rows and change them
 //    [] Clicking outside of row should cancel edit
-//    [] Pagination
 //
 //    [] Don't include all deps in the repo, use npm package.json instead
 //

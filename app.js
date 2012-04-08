@@ -6,12 +6,13 @@
 //    [x] In add batch, "who" field for all added expenses
 //    [x] When using add batch, the line pasted should be saved with the expense,
 //       to avoid adding duplicates later.
+//    [x] When changing category or remove something, update categories correspondingly
 //
 //    [] Pagination: Limit no. of items that can be shown in collection view, and have a link to display more
+//    [] Live update of all clients through iobind
 //    [] Aggregate view
 //    [] Search
 //    [] Add auto-complete suggestion in category and who
-//    [] When changing category or remove something, update categories correspondingly
 //    [] Make sure page doesn't scroll away when deleting something
 //    [] Select multiple rows and change them
 //    [] Clicking outside of row should cancel edit

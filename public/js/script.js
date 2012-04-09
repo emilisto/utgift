@@ -70,7 +70,7 @@ this.ExpenseView = Backbone.View.extend({
 
     var view = this;
     this.model.bind('destroy', function() {
-      $(view.el).remove();
+      $(view.el).detach();
     });
 
     this.render();

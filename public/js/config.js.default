@@ -4,7 +4,7 @@
   if(!ExpenseApp) ExpenseApp = this.ExpenseApp = {};
 
   ExpenseApp.config = {
-    hostname: 'konquest.local'
+    hostname: 'utgift.local'
   };
 
-}((this);
+}(this));

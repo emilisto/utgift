@@ -110,7 +110,7 @@ this.ExpenseView = Backbone.View.extend({
         var $td = ev.target.tagName === 'TD' ?
           $(ev.target) : $(ev.target).parents('td');
 
-        $input = $('input', $td).get(1);
+        $input = $('input', $td);
       }
 
       if(!$input || !$input.length) {
@@ -362,9 +362,6 @@ this.ExpensesView = Backbone.View.extend({
     var matchStr = _.map(fields, function(field) { return model.get(field) || ' '; }).join(' ');
     return _.all(regexps, function(re) { return matchStr.match(re) });
   },
-
-
-
 
   findView: function(model) {
     return this._views[model.cid];

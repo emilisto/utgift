@@ -718,7 +718,8 @@ function random_date() {
 
 $(function(){
 
-  var socket = window.socket = io.connect('emilisto.local');
+  var host = ExpenseApp.config.hostname;
+  var socket = window.socket = io.connect(host);
   // window.Test = new AggregateCollection({ collection: Expenses });
 
   // Filtered.bind('all', function(ev) {

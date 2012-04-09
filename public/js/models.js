@@ -177,7 +177,7 @@
   };
   IndexedCollection.prototype.trigger = function( eventName ) {
     if ( [ 'add', 'remove', 'reset', 'change' ].indexOf(eventName) >= 0) {
-      var args = Array.prototype.slice.call(arguments);
+      var args = Array.prototype.slice.call(arguments, 1);
       _trigger.apply( this, [ 'internal:' + eventName ].concat(args) );
       _trigger.apply( this, [ eventName ].concat(args) );
     } else {

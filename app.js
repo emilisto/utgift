@@ -8,11 +8,11 @@
 //       to avoid adding duplicates later.
 //    [x] When changing category or remove something, update categories correspondingly
 //    [x] Make sorting work
+//    [x] Search
 //
 //    [] Pagination: Limit no. of items that can be shown in collection view, and have a link to display more
 //    [] Live update of all clients through iobind
 //    [] Aggregate view
-//    [] Search
 //    [] "Show more" link in categories
 //    [] Sort months properly in categories
 //    [] When adding batch, ignore rows that already exist.

@@ -5,19 +5,25 @@
 this.SummedExpensesView = Backbone.View.extend({
   template: _.template( $('#summed-expenses-template').html() ),
 
-  initialize: function() {
-    if(!this.collection) throw "must supply collection";
+  initialize: function(options) {
+    if(!this.expenses) throw "must supply collection";
 
     _.bindAll(this, 'render', 'add', 'reset', 'remove');
 
     this._field = 'amount';
     this._total = 0;
 
-    this.collection.bind('add', this.add);
-    this.collection.bind('remove', this.remove);
-    this.collection.bind('reset', this.reset);
+    // this.collection.bind('add', this.add);
+    // this.collection.bind('remove', this.remove);
+    // this.collection.bind('reset', this.reset);
+    this.
+
+    window.sev = this;
 
     this.render();
+  },
+  calculate: function() {
+
   },
   add: function(model) {
     this._total += model.get(this._field);
@@ -104,11 +110,11 @@ this.ExpenseView = Backbone.View.extend({
         var $td = ev.target.tagName === 'TD' ?
           $(ev.target) : $(ev.target).parents('td');
 
-        $input = $('input', $td);
+        $input = $('input', $td).get(1);
       }
 
       if(!$input || !$input.length) {
-        $input = $('td input', this.el).first();
+        $input = $($('td input', this.el).get(1));
       }
 
       $input.focus();
@@ -180,7 +186,7 @@ this.ClassFilterView = Backbone.View.extend({
   },
 
   initialize: function(options) {
-    _.bindAll(this, 'render', 'clickClass');
+    _.bindAll(this, 'render', 'clickClass', 'setFilter', 'clearFilter');
 
     options = options || {};
 
@@ -202,17 +208,34 @@ this.ClassFilterView = Backbone.View.extend({
     this.render();
   },
 
-  clickClass: function(ev) {
-    var filterValue = $(ev.target).attr('rel');
-    var $li = $(ev.target).parent('li');
+  _currentFilter: null,
+  setFilter: function(value) {
+    var $a = $('a[rel="' + value + '"]', this.el);
+    var $li = $a.parent('li');
 
-    if($li.hasClass('active')) {
-      this.collection.clearFilter(this.attr);
-      $('li', this.el).removeClass('active');
-    } else {
-      this.collection.setFilter(this.attr, filterValue);
+    if(this._currentFilter !== value) {
+
+      this.collection.setFilter(this.attr, value);
       $('li', this.el).removeClass('active');
       $li.addClass('active');
+      this._currentFilter = value;
+
+    }
+  },
+  clearFilter: function() {
+    this.collection.clearFilter(this.attr);
+    $('li', this.el).removeClass('active');
+    this._currentFilter = null;
+  },
+
+  clickClass: function(ev) {
+    var $a = $(ev.target);
+    var $li = $a.parent('li');
+
+    if($li.hasClass('active')) {
+      this.clearFilter();
+    } else {
+      this.setFilter($a.attr('rel'));
     }
   },
 
@@ -244,13 +267,13 @@ this.ExpensesView = Backbone.View.extend({
   template: _.template( $('#expenses-template').html() ),
 
   events: {
-    'click th': 'sortColumn'
+    'click th': 'sortColumn',
   },
 
   initialize: function() {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn');
+    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter', 'filterOne');
 
     this._views = {};
 
@@ -258,9 +281,7 @@ this.ExpensesView = Backbone.View.extend({
     this.collection.bind('remove', this.removeOne);
     this.collection.bind('reset', this.render);
 
-    this.collection.bind('all', function(ev) {
-      // console.log('collection ev: %s', ev);
-    });
+    window.ev = this;
 
     this.render();
   },
@@ -282,23 +303,77 @@ this.ExpensesView = Backbone.View.extend({
     }
   },
 
+  // Search
+
+  filter: function(str) {
+    var view = this;
+    var views = this._views;
+
+    if(str) {
+      this.collection.each(function(model) {
+        var $el = $(views[model.cid].el);
+        var matches = view.filterOne(model, str);
+        matches ? $el.show() : $el.hide();
+      });
+    } else {
+      // Show all
+      $('tr', this.el).show();
+    }
+
+    this._updateTotal();
+  },
+
+  _total: 0,
+  _updateTotal: _.debounce(function() {
+    var views = this._views;
+    var total = 0;
+
+    this.collection.each(function(model) {
+      var $el = $(views[model.cid].el);
+      if($el.is(':visible')) {
+        total += model.get('amount');
+      }
+    });
+
+    // FIXME
+    this._total = total = Math.round( total * 100 ) / 100
+    $('table#total td[rel="amount"]').html(Math.round(total, 2));
+  }, 100),
+
+  filterOne: function(model, str) {
+    var fields = [ 'who', 'label', 'category' ];
+
+    var regexps = _.map(str.split(' '), function(str) { return new RegExp(str, 'gi'); });
+
+    var matchStr = _.map(fields, function(field) { return model.get(field) || ' '; }).join(' ');
+    return _.all(regexps, function(re) { return matchStr.match(re) });
+  },
+
+
+
+
   findView: function(model) {
     return this._views[model.cid];
   },
 
   addOne: function(model) {
     var view = new ExpenseView({ model: model });
-    $('tbody', this.el).prepend(view.el);
+    $('#main tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
+
+    this._updateTotal();
   },
   removeOne: function(model) {
     var view = this._views[model.cid];
     if(view) $(view.el).remove();
+
+    this._updateTotal();
   },
   addAll: function() {
     this.collection.each(this.addOne);
   },
   render: function() {
+    console.log('render!');
     $(this.el).html( this.template() );
     this.addAll();
     this.delegateEvents();
@@ -420,20 +495,20 @@ this.AppView = Backbone.View.extend({
 
   events: {
     'click .add-one': 'create',
-    'click .add-batch': 'showAddBatch'
+    'click .add-batch': 'showAddBatch',
+    'keyup input#search': 'search'
   },
 
   initialize: function() {
-    _.bindAll(this, 'render', 'create', 'showAddBatch');
+    _.bindAll(this, 'render', 'create', 'showAddBatch', 'search');
 
     this.collection = Expenses;
-    // this.filteredCollection = new FilteredExpenses([], {
-    //   parent: this.collection,
-    //   liveupdate_keys: 'all'
-    // });
     this.filteredExpenses = window.Filtered = new FilteredCollection([], {
       parent: Expenses
     });
+
+    // FIXME
+    this.filteredExpenses.setFilter('period', 'March -12');
 
     this.expensesView = new ExpensesView({ collection: this.filteredExpenses });
 
@@ -441,9 +516,6 @@ this.AppView = Backbone.View.extend({
     this.aggregatedCollection.setAggregateKeys(['who', 'category']);
 
     this.aggregateView = new AggregatedExpensesView({ collection: this.aggregatedCollection });
-    this.summedView = new SummedExpensesView({ collection: this.filteredExpenses });
-
-    window.ac = this.aggregatedCollection;
 
     this.categoryFilter = new ClassFilterView({
       label: 'Categories',
@@ -463,9 +535,27 @@ this.AppView = Backbone.View.extend({
       collection: this.filteredExpenses
     });
 
+    window.av = this;
+
     this.render();
 
   },
+
+  showCurrentMonth: function() {
+    var now = (new Date).format('mmmm -yy');
+    this.monthFilter.setFilter(now);
+
+    this.whoFilter.clearFilter();
+    this.categoryFilter.clearFilter();
+  },
+
+  // Debounce prevents new search on every key stroke
+  search: _.debounce(function() {
+    var str = $('input#search', this.el).val();
+    this.expensesView.filter(str);
+  }, 150),
+
+
 
   showAddBatch: function() {
     new AddBatchView;
@@ -477,7 +567,10 @@ this.AppView = Backbone.View.extend({
     });
     this.collection.create(model);
 
+    this.showCurrentMonth();
+
     var view = this.expensesView.findView(model);
+    // FIXME: this doesn't work    
     if(view) view.edit();
   },
 
@@ -486,8 +579,8 @@ this.AppView = Backbone.View.extend({
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
-      $('#ExpensesView').append(this.aggregateView.el);
-      $('#SummedExpensesView').append(this.summedView.el);
+      //$('#ExpensesView').append(this.aggregateView.el);
+      //$('#SummedExpensesView').append(this.summedView.el);
       $('#filters').append(this.categoryFilter.el)
       $('#filters').append(this.monthFilter.el)
       $('#filters').append(this.whoFilter.el)
@@ -527,17 +620,12 @@ this.AddBatchView = Backbone.View.extend({
 
     this.editWho = _.throttle(this.editWho, 300);
 
-    // this.collection.bind('all', function(ev) {
-    //   console.log('coll ev: %s', ev);
-    // });
-
     this.render();
 
     $('textarea', this.el).focus();
 
     var view = this;
     $(this.el).on('hidden', function() {
-      console.log('removing element');
       $(view.el).remove();
     });
 

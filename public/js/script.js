@@ -214,7 +214,6 @@ this.ClassFilterView = Backbone.View.extend({
     var $li = $a.parent('li');
 
     if(this._currentFilter !== value) {
-
       this.collection.setFilter(this.attr, value);
       $('li', this.el).removeClass('active');
       $li.addClass('active');
@@ -249,6 +248,10 @@ this.ClassFilterView = Backbone.View.extend({
 
     $(this.el).html(html);
 
+    if(this._currentFilter) {
+      $('a[rel="' + this._currentFilter + '"]', this.el).parent('li').addClass('active');
+    }
+
     this.delegateEvents();
   }
 
@@ -273,15 +276,18 @@ this.ExpensesView = Backbone.View.extend({
   initialize: function() {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter', 'filterOne');
+    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter',
+              'filterOne', 'refreshFilter');
 
     this._views = {};
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('remove', this.removeOne);
-    this.collection.bind('reset', this.render);
 
-    window.ev = this;
+    this.collection.bind('remove', this.refreshFilter);
+    this.collection.bind('add', this.refreshFilter);
+
+    this.collection.bind('reset', this.render);
 
     this.render();
   },
@@ -305,11 +311,16 @@ this.ExpensesView = Backbone.View.extend({
 
   // Search
 
+  refreshFilter: _.debounce(function() {
+    if(this._currentFilter) this.filter(this._currentFilter);
+  }, 100),
+  _currentFilter: null,
   filter: function(str) {
     var view = this;
     var views = this._views;
 
     if(str) {
+      this._currentFilter = str;
       this.collection.each(function(model) {
         var $el = $(views[model.cid].el);
         var matches = view.filterOne(model, str);
@@ -318,6 +329,7 @@ this.ExpensesView = Backbone.View.extend({
     } else {
       // Show all
       $('tr', this.el).show();
+      this._currentFilter = '';
     }
 
     this._updateTotal();
@@ -340,11 +352,13 @@ this.ExpensesView = Backbone.View.extend({
     $('table#total td[rel="amount"]').html(Math.round(total, 2));
   }, 100),
 
-  filterOne: function(model, str) {
+  filterOne: function(model) {
     var fields = [ 'who', 'label', 'category' ];
+    var str = this._currentFilter;
+
+    if(!str) return true;
 
     var regexps = _.map(str.split(' '), function(str) { return new RegExp(str, 'gi'); });
-
     var matchStr = _.map(fields, function(field) { return model.get(field) || ' '; }).join(' ');
     return _.all(regexps, function(re) { return matchStr.match(re) });
   },
@@ -358,6 +372,8 @@ this.ExpensesView = Backbone.View.extend({
 
   addOne: function(model) {
     var view = new ExpenseView({ model: model });
+
+    if(!this.filterOne(model)) $(view.el).hide();
     $('#main tbody', this.el).prepend(view.el);
     this._views[model.cid] = view;
 
@@ -371,6 +387,8 @@ this.ExpensesView = Backbone.View.extend({
   },
   addAll: function() {
     this.collection.each(this.addOne);
+    console.log('addAll');
+    this.filter(this._currentFilter);
   },
   render: function() {
     console.log('render!');
@@ -538,7 +556,7 @@ this.AppView = Backbone.View.extend({
     window.av = this;
 
     this.render();
-
+    this.showCurrentMonth();
   },
 
   showCurrentMonth: function() {

@@ -266,19 +266,18 @@ this.ExpensesView = Backbone.View.extend({
 
 
   sortColumn: function(ev) {
+    var coll = this.collection;
     var col = $(ev.target).parent('th').attr('rel');
 
     var columns = [ 'date', 'label', 'amount', 'category', 'who' ];
 
     if(columns.indexOf(col) >= 0) {
-      // FIXME: make this toggle asc/desc sorting
-      // if(this.collection.compareAttr === col)
-      //   this.collection.order *= -1;
-      // else
-      //   this.collection.order = 1;
+      // Toggle sorting order if clicking twice on same column
+      this.reverseSort = coll.sortAttr === col ? (!this.reverseSort) : false;
+      var opts = { reverse: this.reverseSort };
+      this.collection.sortAttr = col;
 
-      this.collection.compareAttr = col;
-      this.collection.sort();
+      this.collection.sort(opts);
     }
   },
 

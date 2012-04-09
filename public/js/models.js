@@ -247,6 +247,21 @@
       this.add(toAdd);
     },
 
+    sort: function(options) {
+      options || (options = {});
+
+      Backbone.Collection.prototype.sort.call(this, _.extend({}, options, { silent: true }));
+      // Reverse logic: default sorting is descending, i.e. Z-A, we want A-Z per default.
+      if(!options.reverse) this.models.reverse();
+      if (!options.silent) this.trigger('reset', this, options);
+
+      return this;
+    },
+    comparator: function(model) {
+      return this.sortAttr ?
+        model.get(this.sortAttr) : 1;
+    },
+
     _proxyEvents: function(eventName) {
       if(eventName.match(/^index:/)) {
         this.trigger.apply(this, arguments);

@@ -9,14 +9,13 @@
 //    [x] When changing category or remove something, update categories correspondingly
 //    [x] Make sorting work
 //
-//    [] When adding batch, ignore rows that already exist.
 //    [] Pagination: Limit no. of items that can be shown in collection view, and have a link to display more
 //    [] Live update of all clients through iobind
 //    [] Aggregate view
 //    [] Search
 //    [] "Show more" link in categories
 //    [] Sort months properly in categories
-
+//    [] When adding batch, ignore rows that already exist.
 //    [] Add auto-complete suggestion in category and who
 //    [] Make sure page doesn't scroll away when deleting something
 //    [] Select multiple rows and change them

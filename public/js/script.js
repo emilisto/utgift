@@ -364,14 +364,24 @@ this.ExpensesView = Backbone.View.extend({
   },
 
   findView: function(model) {
-    return this._views[model.cid];
+    var view = this._views[model.cid];
+
+    if(!view) {
+      view = new ExpenseView({ model: model });
+      this._views[model.cid] = view;
+    }
+
+    return view;
   },
 
   addOne: function(model) {
-    var view = new ExpenseView({ model: model });
+    var view = this.findView(model);
 
     if(!this.filterOne(model)) $(view.el).hide();
-    $('#main tbody', this.el).prepend(view.el);
+
+    // This halves the time this method takes
+    this.$tbody.append(view.el);
+
     this._views[model.cid] = view;
 
     this._updateTotal();
@@ -384,12 +394,13 @@ this.ExpensesView = Backbone.View.extend({
   },
   addAll: function() {
     this.collection.each(this.addOne);
-    console.log('addAll');
     this.filter(this._currentFilter);
   },
   render: function() {
     console.log('render!');
     $(this.el).html( this.template() );
+    this.$tbody = $('#main tbody', this.el);
+
     this.addAll();
     this.delegateEvents();
   }

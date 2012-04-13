@@ -36,7 +36,7 @@ this.ExpenseView = Backbone.View.extend({
     this.render();
 
     if(this.model.get('new')) {
-      this.edit();
+      _.delay(this.edit, 50);
     }
   },
 
@@ -576,12 +576,7 @@ this.AppView = Backbone.View.extend({
     });
 
     this.collection.create(model);
-
     this.showCurrentMonth();
-
-    var view = this.expensesView.findView(model);
-    // FIXME: this doesn't work    
-    //if(view) view.edit();
   },
 
   render: function() {

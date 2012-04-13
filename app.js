@@ -16,6 +16,9 @@
 //    [] Select multiple rows and change them
 //    [] Add auto-complete suggestion in category and who
 //    [] Make sure correct row is selected after editing
+//    [] "Search all" next to search box to remove filters button
+//    [] Import from Mastercard
+//    [] Sort by date per default
 //
 //    [] Pagination: Limit no. of items that can be shown in collection view, and have a link to display more
 //    [] Live update of all clients through iobind

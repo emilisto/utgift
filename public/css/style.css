@@ -69,3 +69,10 @@ textarea#batch {
   width: 500px;
   height: 300px;
 }
+
+/* table#main.searching tr {*/
+/*   display: none;*/
+/* }*/
+/* table#main.searching tr.matching {*/
+/*   display: block;*/
+/* }*/

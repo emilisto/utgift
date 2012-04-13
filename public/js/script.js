@@ -231,6 +231,9 @@ this.ExpensesView = Backbone.View.extend({
 
     this.collection.bind('reset', this.render);
 
+    this.collection.sortAttr = 'date';
+    this.collection.sort();
+
     this.render();
   },
 

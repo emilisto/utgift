@@ -19,7 +19,7 @@ this.ExpenseView = Backbone.View.extend({
   initialize: function(options) {
     if(!this.model) throw "must supply model";
 
-    _.bindAll(this, 'render', 'edit', 'save', 'createSynapses', 'keyCommand');
+    _.bindAll(this, 'render', 'edit', 'save', 'keyCommand');
 
     this.parent = options.parent;
     
@@ -43,11 +43,12 @@ this.ExpenseView = Backbone.View.extend({
   keyCommand: function(ev) {
     if(!ev) return;
 
-    /*console.log('keyCode: %d shiftKey: %o metaKey: %o',
-                ev.keyCode, ev.shiftKey, ev.metaKey);*/
-
     var field = $(ev.target).parent('td').attr('rel');
 
+    //
+    // - Shift + Up / Down saves and edits next/previously respectively
+    // - Enter saves and edits next
+    //
     if(
       (ev.shiftKey && [38, 40].indexOf(ev.keyCode) >= 0) ||
       (!ev.shiftKey && ev.keyCode === 13)
@@ -55,7 +56,9 @@ this.ExpenseView = Backbone.View.extend({
 
       this.parent.editNeighbour(ev.keyCode === 38 ? 'prev' : 'next');
 
-    } else if(ev.shiftKey && ev.keyCode === 13) {
+    }
+    // Shift + Enter saves without editing next
+    else if(ev.shiftKey && ev.keyCode === 13) {
       this.save();
     }
   },
@@ -103,28 +106,6 @@ this.ExpenseView = Backbone.View.extend({
 
     // FIXME: Fix sorting that doesn't reset the view state
     //this.model.collection.sort();
-  },
-
-  // No longer used
-  createSynapses: function() {
-    var self = this;
-    var modelSynapse = Synapse(this.model);
-
-    var modelObservees = ['label', 'amount', 'who'];
-
-    _.each(['label', 'amount', 'category', 'who'], function(name) {
-      var input = $('[name=' + name + ']', self.el),
-          span = input.siblings('span');
-
-      var synapse = Synapse(input);
-      var spanSynapse = Synapse(span);
-
-      if(modelObservees.indexOf(name) >= 0) {
-        modelSynapse.observe(synapse);
-      }
-      spanSynapse.observe(synapse);
-    });
-
   },
 
   render: function() {
@@ -240,9 +221,6 @@ this.ExpensesView = Backbone.View.extend({
 
     this._views = {};
 
-    // this.collection.bind('all', function(ev) {
-    //   console.log('ev: %s %o', ev, arguments);
-    // });
     window.ev = this;
 
     this.collection.bind('add', this.addOne);
@@ -329,6 +307,8 @@ this.ExpensesView = Backbone.View.extend({
     var matchStr = _.map(fields, function(field) { return model.get(field) || ' '; }).join(' ');
     return _.all(regexps, function(re) { return matchStr.match(re) });
   },
+
+
 
   findView: function(model) {
     var view = this._views[model.cid];
@@ -536,6 +516,8 @@ this.AppView = Backbone.View.extend({
       collection: this.filteredExpenses
     });
 
+    // FIXME: make subclass MonthFilterView of ClassFilterView to 
+    // sort properly and enable expand/collapse of months
     this.monthFilter = new ClassFilterView({
       label: 'Months',
       attr: 'period',

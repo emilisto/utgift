@@ -329,6 +329,8 @@ this.ExpensesView = Backbone.View.extend({
     // This halves the time this method takes
     this.$tbody.append(view.el);
 
+    view.delegateEvents();
+
     this._views[model.cid] = view;
 
     this._updateTotal();

@@ -25,7 +25,8 @@ table.expenses {
       // width: 80px;
       width: 100%;
     }
-    td[rel="select"] {
+    td[rel="select"],
+    th[rel="select"] {
       padding: 0px;
 
       label {
@@ -55,14 +56,17 @@ table.expenses {
     }
 
     // Column widths
-    @wSelect: 30px;
+    @wSelect: 20px;
     @wDate: 40px;
     @wLabel: 230px;
     @wAmount: 50px;
     @wCategory: 60px;
     @wWho: 40px;
 
-    td[rel="select"] { span, input { width: @wSelect; } }
+    td[rel="select"],
+    th[rel="select"] {
+      span, input { width: @wSelect; }
+    }
     td[rel="date"] {
       span, input {
         width: @wDate;

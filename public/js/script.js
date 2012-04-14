@@ -14,7 +14,7 @@ this.ExpenseView = Backbone.View.extend({
     'click .btn-remove': 'remove',
     'click .btn-edit': 'edit',
     'keyup input': 'keyCommand',
-    'click input[type="checkbox"]': 'selectOne'
+    'change td[rel="select"] input': 'selectOne'
   },
 
   initialize: function(options) {
@@ -236,6 +236,9 @@ this.SelectedView = Backbone.View.extend({
 
     this.bind('expense:select', this.selectOne);
 
+    // Does magic for select/deselect all
+    this.updateSelections = _.debounce(this.updateSelections, 50);
+
     this._views = {};
     this.collection.bind('reset', this.updateSelections);
     this.collection.bind('add', this.updateSelections);
@@ -331,15 +334,19 @@ this.ExpensesView = Backbone.View.extend({
 
   events: {
     'click th': 'sortColumn',
+    'click th[rel="select"] input': 'selectAll'
   },
 
   initialize: function(parent) {
     if(!this.collection) throw "must supply collection";
 
     _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter',
-              'filterOne', 'refreshFilter');
+              'filterOne', 'refreshFilter', 'updateSelectAll', 'selectAll');
 
     this._views = {};
+
+    this.updateSelectAll = _.debounce(this.updateSelectAll, 50);
+    this.bind('expense:select', this.updateSelectAll);
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('remove', this.removeOne);
@@ -354,7 +361,35 @@ this.ExpensesView = Backbone.View.extend({
 
     this.render();
   },
+  updateSelectAll: function() {
+    var $selectAll = $('th input[name="select"]', this.el);
+    var nSelected = $('td input[name="select"]:checked', this.el).length;
+    var nVisible = $('td[rel="select"] input')
+      .filter(function() { return $(this).parents('tr').is(':visible'); })
+      .length;
 
+    if(nSelected === nVisible) {
+      $selectAll.attr('checked', 'checked');
+    } else {
+      $selectAll.removeAttr('checked');
+    }
+  },
+  selectAll: function() {
+    var $selectAll = $('th input[name="select"]', this.el);
+    var nSelected = $('td input[name="select"]:checked', this.el).length;
+
+    if($selectAll.is(':checked')) {
+      $('td[rel="select"] input')
+        .filter(function() { return $(this).parents('tr').is(':visible'); })
+        .attr('checked', 'checked')
+        .trigger('change');
+    } else {
+      $('td[rel="select"] input')
+        .removeAttr('checked')
+        .trigger('change');
+    }
+    console.log(nSelected);
+  },
   editNeighbour: function(which) {
     var active = _.filter(this._views, function(view) {
       return $(view.el).hasClass('editable');
@@ -401,7 +436,6 @@ this.ExpensesView = Backbone.View.extend({
     var views = this._views;
 
     if(str) {
-      // $('table#main', this.el).addClass('searching');
       this._currentFilter = str;
       this.collection.each(function(model) {
         var $el = $(views[model.cid].el);
@@ -416,6 +450,7 @@ this.ExpensesView = Backbone.View.extend({
     }
 
     this._updateTotal();
+    this.updateSelectAll();
   },
 
   filterOne: function(model) {

@@ -1,0 +1,131 @@
+@import "../assets/less/bootstrap.less";
+
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+
+.modal { display: none; }
+
+#add.btn-group {
+  margin: 10px 0px;
+}
+
+table.expenses {
+  width: 750px;
+
+  th, td {
+    vertical-align: middle;
+  }
+  tr {
+    .btn-group { visibility: hidden; }
+    &:hover .btn-group { visibility: visible; }
+
+    input[type="text"] {
+      margin: 0;
+      // width: 80px;
+      width: 100%;
+    }
+    td[rel="select"] {
+      padding: 0px;
+
+      label {
+        cursor: pointer;
+        display: inline;
+        padding: 10px;
+      }
+      input {
+        display: inline;
+      }
+    }
+
+    // State: normal or .editable
+    span { display: inline; }
+    input[type="text"] { display: none; }
+
+    a.btn.btn-group { display: inline; }
+    a.btn-save { display: none; }
+
+    &.editable {
+      span { display: none; }
+      input[type="text"] { display: inline; }
+
+      a.btn-save { display: inline; }
+      .btn-group { display: none; }
+      &:hover .btn-group { display: none; }
+    }
+
+    // Column widths
+    @wSelect: 30px;
+    @wDate: 40px;
+    @wLabel: 230px;
+    @wAmount: 50px;
+    @wCategory: 60px;
+    @wWho: 40px;
+
+    td[rel="select"] { span, input { width: @wSelect; } }
+    td[rel="date"] {
+      span, input {
+        width: @wDate;
+      }
+    }
+    td[rel="label"] {
+      span, input {
+        width: @wLabel;
+      }
+    }
+    td[rel="amount"] {
+      span, input {
+        width: @wAmount;
+      }
+    }
+    td[rel="category"] {
+      span, input {
+        width: @wCategory;
+      }
+    }
+    td[rel="who"] {
+      span, input {
+        width: @wWho;
+      }
+    }
+  }
+
+}
+
+#modal-add-batch.modal {
+  margin-top: -400px;
+  max-height: 750px;
+  width: 800px;
+  margin: -400px 0 0 -380px;
+
+  textarea {
+    width: 100%;
+    height: 35px;
+  }
+  table {
+    width: 100%;
+  }
+}
+
+
+#edit-all.well {
+  display: none;
+  // padding: 8px 19px;
+  position: fixed;
+  bottom: -22px;
+  /* background-color: #f5f5f5;*/
+  border: 1px solid #aaa;
+  height: 130px;
+  width: 750px;
+
+  h2 { float: left; }
+  .btn-remove-all { float: right; }
+  input {
+    display: inline;
+  }
+
+  & > .btn {
+    float: right;
+    margin: 5px;
+  }
+}

@@ -44,9 +44,11 @@ app.configure(function(){
   app.use(express.bodyParser());
   app.use(express.methodOverride());
 
+  var publicDir = __dirname + '/public';
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
   app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+  app.use(express.static(publicDir));
+  // app.use(express.compiler({src: publicDir, enable: ['less']}));
 });
 
 app.get('/js/vendor.js', routes.vendorjs);

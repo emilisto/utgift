@@ -10,19 +10,20 @@ this.ExpenseView = Backbone.View.extend({
 
   events: {
     'dblclick': 'edit',
-    'click .save': 'save',
+    'click .btn-save': 'save',
     'click .btn-remove': 'remove',
     'click .btn-edit': 'edit',
-    'keyup input': 'keyCommand'
+    'keyup input': 'keyCommand',
+    'click input[type="checkbox"]': 'selectOne'
   },
 
   initialize: function(options) {
     if(!this.model) throw "must supply model";
 
-    _.bindAll(this, 'render', 'edit', 'save', 'keyCommand');
+    _.bindAll(this, 'render', 'edit', 'save', 'keyCommand', 'selectOne', 'deselect');
 
     this.parent = options.parent;
-    
+
     // This causes the expense to be redrawn while user is editing,
     // resulting in lost focus of field. Use 'new' attr to prevent re-
     // rendering.
@@ -38,6 +39,22 @@ this.ExpenseView = Backbone.View.extend({
     if(this.model.get('new')) {
       _.delay(this.edit, 50);
     }
+  },
+
+  deselect: function() {
+    if(this._selected) {
+      this._selected = false;
+      this.trigger('select', false);
+      this.render();
+    }
+  },
+  selectOne: function() {
+    var self = this;
+    _.delay(function() {
+      var state = $('input[type="checkbox"]', self.el).is(':checked');
+      self._selected = state;
+      self.trigger('select', state);
+    });
   },
 
   keyCommand: function(ev) {
@@ -64,17 +81,20 @@ this.ExpenseView = Backbone.View.extend({
   },
 
   edit: function(ev) {
+    var $td = null;
+
+    if(ev && ev.target) {
+      $td = ev.target.tagName === 'TD' ?
+        $(ev.target) : $(ev.target).parents('td');
+    }
+
+    if($td && $td.attr('rel') === 'select') return;
+
     if(!$(this.el).hasClass('editable')) {
       $(this.el).siblings().removeClass('editable');
       $(this.el).addClass('editable');
 
-      var $input;
-      if(ev) {
-        var $td = ev.target.tagName === 'TD' ?
-          $(ev.target) : $(ev.target).parents('td');
-
-        $input = $('input', $td);
-      }
+      var $input = $td ? $('input', $td) : null;
 
       if(!$input || !$input.length) {
         $input = $($('td input', this.el).get(1));
@@ -110,6 +130,7 @@ this.ExpenseView = Backbone.View.extend({
 
   render: function() {
     var json = this.model.toJSON();
+    json.selected = !!this._selected;
 
     var date = new Date(this.model.get('date'));
     json.date = date.format('d mmm');
@@ -197,6 +218,105 @@ this.ClassFilterView = Backbone.View.extend({
 
 });
 
+
+this.SelectedView = Backbone.View.extend({
+  id: 'view-selected',
+  template: _.template( $('#selected-template').html() ),
+
+  events: {
+    'click .btn-save-all': 'saveAll',
+    'click .btn-cancel': 'cancel',
+    'click .btn-remove-all': 'removeAll'
+  },
+
+  initialize: function(parent) {
+    _.bindAll(this, 'updateSelections', 'selectOne', 'render', 'saveAll', 'cancel', 'removeAll');
+
+    this.collection = new Backbone.Collection();
+
+    this.bind('expense:select', this.selectOne);
+
+    this._views = {};
+    this.collection.bind('reset', this.updateSelections);
+    this.collection.bind('add', this.updateSelections);
+    this.collection.bind('remove', this.updateSelections);
+
+    this.render();
+  },
+
+
+  keys:  [ 'label', 'amount', 'category', 'who' ],
+
+  updateSelections: function() {
+    var self = this;
+    var coll = this.collection;
+
+    var n = coll.length;
+    $('#edit-all h2', this.el).html(n + ' selected');
+
+    // Show panel if n >= 1
+    if(!n) {
+      $('#edit-all', this.el).slideUp();
+      return;
+    }
+
+    $('#edit-all', this.el).slideDown();
+
+    // Find values common to all selected rows
+    var identical = {};
+
+    _.each(this.keys, function(key) {
+      var vals = coll.pluck(key);
+      var unique = _.uniq(vals);
+      if(unique.length === 1) identical[key] = vals[0];
+    });
+
+    _.each(this.keys, function(key) {
+      var $el = $('input[name="' + key + '"]', self.el);
+      $el.val(identical[key] ? identical[key] : '');
+    });
+  },
+  selectOne: function(view, state) {
+    if(state) {
+      if(!this.collection.get(view.model)) {
+        this._views[view.model.cid] = view;
+        this.collection.add(view.model);
+      }
+    } else {
+      if(this.collection.get(view.model)) {
+        delete this._views[view.model.cid];
+        this.collection.remove(view.model);
+      }
+    }
+  },
+  cancel: function() {
+    _.each(this._views, function(view) {
+      view.deselect();
+    });
+  },
+  saveAll: function() {
+    var self = this;
+    var values = {};
+    _.each(this.keys, function(key) {
+      var val = $('input[name="' + key + '"]', self.el).val();
+      if(val) values[key] = val;
+    });
+
+    this.collection.each(function(model) {
+      model.save(values);
+    });
+
+    this.cancel();
+  },
+  removeAll: function() {
+
+  },
+  render: function() {
+    $(this.el).html( this.template());
+    this.delegateEvents();
+  }
+
+});
 this.ExpensesView = Backbone.View.extend({
   /*
    * FIXME:
@@ -220,8 +340,6 @@ this.ExpensesView = Backbone.View.extend({
               'filterOne', 'refreshFilter');
 
     this._views = {};
-
-    window.ev = this;
 
     this.collection.bind('add', this.addOne);
     this.collection.bind('remove', this.removeOne);
@@ -314,10 +432,19 @@ this.ExpensesView = Backbone.View.extend({
 
 
   findView: function(model) {
+    var self = this;
     var view = this._views[model.cid];
 
     if(!view) {
       view = new ExpenseView({ model: model, parent: this });
+
+      // Proxy events from view
+      view.bind('all', function(eventName) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        args = [ 'expense:' + eventName, view ].concat(args);
+        self.trigger.apply( self, args);
+      });
+
       this._views[model.cid] = view;
     }
 
@@ -504,36 +631,41 @@ this.AppView = Backbone.View.extend({
 
     this.expensesView = new ExpensesView({ collection: this.filteredExpenses });
 
-    this.aggregatedCollection = new AggregateCollection({ collection: Expenses });
-    this.aggregatedCollection.setAggregateKeys(['who', 'category']);
+    // FIXME: maybe do Dependency Injection of ExpensesView here?
+    this.selectedView = new SelectedView();
+    this.expensesView.bind('expense:select', this.selectedView.selectOne);
 
-    this.aggregateView = new AggregatedExpensesView({ collection: this.aggregatedCollection });
+    // Aggregation
+      this.aggregatedCollection = new AggregateCollection({ collection: Expenses });
+      this.aggregatedCollection.setAggregateKeys(['who', 'category']);
+      this.aggregateView = new AggregatedExpensesView({ collection: this.aggregatedCollection });
 
-    this.categoryFilter = new ClassFilterView({
-      label: 'Categories',
-      attr: 'category',
-      collection: this.filteredExpenses
-    });
+    // Filters
+      this.categoryFilter = new ClassFilterView({
+        label: 'Categories',
+        attr: 'category',
+        collection: this.filteredExpenses
+      });
 
-    this.whoFilter = new ClassFilterView({
-      label: 'Who',
-      attr: 'who',
-      collection: this.filteredExpenses
-    });
+      this.whoFilter = new ClassFilterView({
+        label: 'Who',
+        attr: 'who',
+        collection: this.filteredExpenses
+      });
 
-    // FIXME: make subclass MonthFilterView of ClassFilterView to 
-    // sort properly and enable expand/collapse of months
-    this.monthFilter = new ClassFilterView({
-      label: 'Months',
-      attr: 'period',
-      collection: this.filteredExpenses
-    });
+      // FIXME: make subclass MonthFilterView of ClassFilterView to 
+      // sort properly and enable expand/collapse of months
+      this.monthFilter = new ClassFilterView({
+        label: 'Months',
+        attr: 'period',
+        collection: this.filteredExpenses
+      });
 
     window.av = this;
 
     this.render();
 
-    this.showCurrentMonth();
+    //this.showCurrentMonth();
   },
 
   showCurrentMonth: function() {
@@ -571,6 +703,7 @@ this.AppView = Backbone.View.extend({
 
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
+      $('#SelectedView').append(this.selectedView.el);
       //$('#ExpensesView').append(this.aggregateView.el);
       //$('#SummedExpensesView').append(this.summedView.el);
       $('#filters').append(this.categoryFilter.el)

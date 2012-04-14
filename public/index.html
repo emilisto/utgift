@@ -7,11 +7,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <!-- Le styles -->
-    <!-- <script src="../assets/js/less.js"></script>-->
-    <!-- <link rel="stylesheet/less" href="../assets/less/bootstrap.less">-->
-    <link rel="stylesheet" href="/assets/css/bootstrap.css">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet/less" type="text/css" href="/less/style.less">
+    <script type="text/javascript" src="/assets/js/less.js"></script>
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -26,16 +23,11 @@
 
     <script type="text/handlebar-template" id="expenses-template">
 
-      <table id="total" class="table table-striped table-bordered">
-        <tr>
-          <td>Total</td>
-          <td rel="amount"></td>
-        </tr>
-      </table>
 
-      <table id="main" class="table table-striped table-bordered">
+      <table id="main" class="table table-striped table-bordered expenses">
         <thead>
           <tr>
+            <th></th>
             <th rel="date">
               <a class="btn">Date</a><br/>
             </th>
@@ -60,8 +52,72 @@
 
         </tbody>
       </table>
+
+      <table id="total" class="table table-striped table-bordered">
+        <tr>
+          <td>Total</td>
+          <td rel="amount"></td>
+        </tr>
+      </table>
+
     </script>
 
+    <script type="text/handlebar-template" id="selected-template">
+      <div id="edit-all" class="well">
+        <h2>4 Selected</h2>
+        <!-- <a class="btn-remove-all btn btn-danger btn-remove">-->
+        <!--   <i class="icon-white icon-minus"></i>-->
+        <!--   Remove all-->
+        <!-- </a>-->
+
+        <table class="table expenses">
+          <thead>
+            <tr>
+              <!-- <th rel="date">-->
+              <!--     Date-->
+              <!-- </th>-->
+              <th rel="label">
+                  Label
+              </th>
+              <th rel="amount">
+                  Amount
+              </th>
+              <th rel="category">
+                  Category
+              </th>
+              <th rel="who">
+                  Who
+              </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <!-- <td rel="date">-->
+              <!--   <input type="text" name="date" value="20 mar">-->
+              <!-- </td>-->
+              <td rel="label">
+                <input type="text" name="label" value="Överföring Pappa">
+              </td>
+              <td rel="amount">
+                <input type="text" name="amount" value="-200">
+              </td>
+              <td rel="category">
+                <input type="text" name="category" value="Misc">
+              </td>
+              <td rel="who">
+                <input type="text" name="who" value="Katie">
+              </td>
+              <td>
+                <a class="btn-save-all btn btn-primary">Save all</a>
+                <a class="btn-cancel btn">Cancel</a>
+              </td>
+            </tr>
+          <tbody>
+        </table>
+      </div>
+
+    </script>
 
 
     <script type="text/handlebar-template" id="aggregated-expenses-template">
@@ -90,6 +146,11 @@
     </script>
 
     <script type="text/handlebar-template" id="expense-template">
+      <td rel="select">
+          <label>
+            <input type="checkbox" name="select" <% if(selected) { %> checked <% } %> />
+          </label>
+      </td>
       <td rel="date">
         <span><%= date %></span>
         <input type="text" name="date" value="<%= date %>" />
@@ -112,14 +173,14 @@
       </td>
       <td>
         <div class="btn-group">
-          <a class="btn btn-danger btn-remove">
+          <a class="btn-remove btn btn-danger btn-remove">
             <i class="icon-minus"></i>
           </a>
-          <a class="btn btn-edit">
+          <a class="btn-edit btn">
             <i class="icon-edit"></i>
           </a>
         </div>
-        <a class="save btn btn-success">
+        <a class="btn-save btn btn-success">
           <i class="icon-ok"></i>Save
         </a>
 
@@ -181,6 +242,7 @@
 
               <!-- ExpensesView goes here -->
               <div id="ExpensesView"></div>
+              <div id="SelectedView"></div>
 
 <!--
 12-03-12	12-03-11 	YUKIKOS SUSHI AB 	 	-105,00	518,65
@@ -217,7 +279,6 @@
         <h3>Add batch</h3>
       </div>
       <div class="modal-body">
-        <div id="ExpensesView"></div>
 
         <div class="control-group">
           <label class="control-label" for="who">Who</label>
@@ -227,6 +288,8 @@
           </div>
         </div>
 
+
+        <div id="ExpensesView"></div>
         <textarea placeholder="Paste here"></textarea>
       </div>
       <div class="modal-footer">

@@ -104,7 +104,9 @@ this.ExpenseView = Backbone.View.extend({
     }
   },
   remove: function() {
-    this.model.destroy();
+    if(confirm('Are you sure?')) {
+      this.model.destroy();
+    }
   },
   save: function() {
     var self = this;

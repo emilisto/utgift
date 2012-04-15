@@ -180,7 +180,7 @@ this.ClassFilterView = Backbone.View.extend({
   },
 
   initialize: function(options) {
-    _.bindAll(this, 'render', 'clickClass', 'setFilter', 'clearFilter');
+    _.bindAll(this, 'render', 'clickClass', 'setFilter', 'clearFilter', 'checkEmpty');
 
     options = options || {};
 
@@ -197,8 +197,13 @@ this.ClassFilterView = Backbone.View.extend({
     };
 
     this.collection.on('index:emptied index:created', eventFilter, this);
+    this.collection.on('index:emptied', this.checkEmpty);
 
     this.render();
+  },
+
+  checkEmpty: function(attr) {
+    if(attr === this.attr) this.clearFilter();
   },
 
   _currentFilter: null,

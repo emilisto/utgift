@@ -94,6 +94,15 @@ this.ExpenseView = Backbone.View.extend({
       $(this.el).siblings().removeClass('editable');
       $(this.el).addClass('editable');
 
+      // Autocompletion
+      // FIXME: this is spaghetti coding
+      $('input[name="category"]', this.el).typeahead({
+        source: Expenses.getValues('category')
+      });
+      $('input[name="who"]', this.el).typeahead({
+        source: Expenses.getValues('who')
+      });
+
       var $input = $td ? $('input', $td) : null;
 
       if(!$input || !$input.length) {

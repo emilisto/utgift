@@ -27,10 +27,10 @@ this.ExpenseView = Backbone.View.extend({
     // This causes the expense to be redrawn while user is editing,
     // resulting in lost focus of field. Use 'new' attr to prevent re-
     // rendering.
-    this.model.bind('change', this.render);
+    this.model.on('change', this.render);
 
     var view = this;
-    this.model.bind('destroy', function() {
+    this.model.on('destroy', function() {
       $(view.el).detach();
     });
 
@@ -161,12 +161,11 @@ this.ClassFilterView = Backbone.View.extend({
     var attr = this.attr = options.attr;
     this.label = options.label || 'Filter: ' + this.attr;
 
-    var eventFilter = _.bind(function(attr) {
+    var eventFilter = function(attr) {
       if(attr === this.attr) this.render();
-    }, this);
+    };
 
-    this.collection.bind('index:emptied', eventFilter);
-    this.collection.bind('index:created', eventFilter);
+    this.collection.on('index:emptied index:created', eventFilter);
 
     this.render();
   },
@@ -236,15 +235,13 @@ this.SelectedView = Backbone.View.extend({
 
     this.collection = new Backbone.Collection();
 
-    this.bind('expense:select', this.selectOne);
+    this.on('expense:select', this.selectOne);
 
     // Does magic for select/deselect all
     this.updateSelections = _.debounce(this.updateSelections, 50);
 
     this._views = {};
-    this.collection.bind('reset', this.updateSelections);
-    this.collection.bind('add', this.updateSelections);
-    this.collection.bind('remove', this.updateSelections);
+    this.collection.on('add remove reset', this.updateSelections);
 
     this.render();
   },
@@ -314,7 +311,8 @@ this.SelectedView = Backbone.View.extend({
     this.cancel();
   },
   removeAll: function() {
-
+    var models = Array.prototype.slice.call(this.collection.models);
+    _.each(models, function(model) { model.destroy(); });
   },
   render: function() {
     $(this.el).html( this.template());
@@ -348,21 +346,25 @@ this.ExpensesView = Backbone.View.extend({
     this._views = {};
 
     this.updateSelectAll = _.debounce(this.updateSelectAll, 50);
-    this.bind('expense:select', this.updateSelectAll);
+    this.on('expense:select', this.updateSelectAll);
+    this.collection.on('add remove reset', this.updateSelectAll);
 
-    this.collection.bind('add', this.addOne);
-    this.collection.bind('remove', this.removeOne);
+    this.collection.on('add', this.addOne);
+    this.collection.on('remove', this.removeOne);
 
-    this.collection.bind('remove', this.refreshFilter);
-    this.collection.bind('add', this.refreshFilter);
+    this.collection.on('add remove', this.refreshFilter);
 
-    this.collection.bind('reset', this.render);
+    this.collection.on('reset', this.render);
 
     this.collection.sortAttr = 'date';
     this.collection.sort();
 
     this.render();
   },
+
+
+  //////////////////
+  // Selections
   updateSelectAll: function() {
     var $selectAll = $('th input[name="select"]', this.el);
     var nSelected = $('td input[name="select"]:checked', this.el).length;
@@ -392,6 +394,8 @@ this.ExpensesView = Backbone.View.extend({
     }
     console.log(nSelected);
   },
+
+  // Used for Shift + Up / Down, to edit the expense before or after
   editNeighbour: function(which) {
     var active = _.filter(this._views, function(view) {
       return $(view.el).hasClass('editable');
@@ -427,6 +431,7 @@ this.ExpensesView = Backbone.View.extend({
     }
   },
 
+  //////////////////
   // Search
 
   refreshFilter: _.debounce(function() {
@@ -476,7 +481,7 @@ this.ExpensesView = Backbone.View.extend({
       view = new ExpenseView({ model: model, parent: this });
 
       // Proxy events from view
-      view.bind('all', function(eventName) {
+      view.on('all', function(eventName) {
         var args = Array.prototype.slice.call(arguments, 1);
         args = [ 'expense:' + eventName, view ].concat(args);
         self.trigger.apply( self, args);
@@ -531,7 +536,9 @@ this.ExpensesView = Backbone.View.extend({
       this._total = total;
       $('table#total td[rel="amount"]').html(Math.round(total, 2));
     }
-  }, 100),
+  }, 50),
+
+
   render: function() {
     $(this.el).html( this.template() );
     this.$tbody = $('#main tbody', this.el);
@@ -553,10 +560,10 @@ this.AggregatedExpenseView = Backbone.View.extend({
 
     _.bindAll(this, 'render');
 
-    this.model.bind('change', this.render);
+    this.model.on('change', this.render);
 
     var view = this;
-    this.model.bind('destroy', function() {
+    this.model.on('destroy', function() {
       $(view.el).remove();
     });
 
@@ -597,13 +604,8 @@ this.AggregatedExpensesView = Backbone.View.extend({
 
     this._views = {};
 
-    this.collection.bind('reset', this.render);
-     this.collection.bind('add', this.addOne);
-    // this.collection.bind('reset', this.render);
-
-    // this.collection.bind('all', function(ev) {
-    //   console.log('collection ev: %s', ev);
-    // });
+    this.collection.on('reset', this.render);
+    this.collection.on('add', this.addOne);
 
     this.render();
   },
@@ -670,7 +672,7 @@ this.AppView = Backbone.View.extend({
 
     // FIXME: maybe do Dependency Injection of ExpensesView here?
     this.selectedView = new SelectedView();
-    this.expensesView.bind('expense:select', this.selectedView.selectOne);
+    this.expensesView.on('expense:select', this.selectedView.selectOne);
 
     // Aggregation
       this.aggregatedCollection = new AggregateCollection({ collection: Expenses });

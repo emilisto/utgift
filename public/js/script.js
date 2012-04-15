@@ -657,11 +657,12 @@ this.AppView = Backbone.View.extend({
   events: {
     'click .add-one': 'create',
     'click .add-batch': 'showAddBatch',
-    'keyup input#search': 'search'
+    'keyup #search input': 'search',
+    'click #search .cancel': 'cancelSearch'
   },
 
   initialize: function() {
-    _.bindAll(this, 'render', 'create', 'showAddBatch', 'search');
+    _.bindAll(this, 'render', 'create', 'showAddBatch', 'search', 'cancelSearch');
 
     this.collection = Expenses;
     this.filteredExpenses = window.Filtered = new FilteredCollection([], {
@@ -715,11 +716,19 @@ this.AppView = Backbone.View.extend({
     this.categoryFilter.clearFilter();
   },
 
+  cancelSearch: function() {
+    $('#search input', this.el).val('').trigger('keyup');
+  },
   // Debounce prevents new search on every key stroke
   search: _.debounce(function() {
-    var str = $('input#search', this.el).val();
+    var str = $('#search input', this.el).val();
+    if(str) {
+      $('#search', this.el).addClass('active');
+    } else {
+      $('#search', this.el).removeClass('active');
+    }
     this.expensesView.filter(str);
-  }, 150),
+  }, 50),
 
 
 

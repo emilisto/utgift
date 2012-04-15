@@ -96,6 +96,29 @@ table.expenses {
 
 }
 
+#search {
+  input {
+    z-index: 1;
+  }
+
+  .cancel { display: none; }
+  &.active .cancel {
+    display: inline;
+
+    // This is ugly as fuck, make better styling.
+    // margin-left: -28px;
+    padding: 4px;
+    z-index: 2;
+    cursor: pointer;
+    i {
+      margin-top: -1px;
+      opacity: 0.5;
+      z-index: 4;
+    }
+    &:hover i { opacity: 0.4; }
+  }
+}
+
 #modal-add-batch.modal {
   margin-top: -400px;
   max-height: 750px;

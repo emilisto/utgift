@@ -106,11 +106,12 @@
     },
 
     _indexedReset: function() {
-      console.log('_indexedReset()');
       this._clearValues();
       this.each(this._indexedAdd);
     },
     _indexedChange: function(attr, model, val) {
+      val = val || 'Unspecified';
+
       var values = this._attributeValues[attr];
       var prev = model._previousAttributes[attr];
 

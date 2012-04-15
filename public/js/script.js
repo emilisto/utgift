@@ -165,7 +165,7 @@ this.ClassFilterView = Backbone.View.extend({
       if(attr === this.attr) this.render();
     };
 
-    this.collection.on('index:emptied index:created', eventFilter);
+    this.collection.on('index:emptied index:created', eventFilter, this);
 
     this.render();
   },

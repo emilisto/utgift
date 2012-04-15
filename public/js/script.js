@@ -9,10 +9,10 @@ this.ExpenseView = Backbone.View.extend({
   template: _.template( $('#expense-template').html() ),
 
   events: {
-    'dblclick': 'edit',
+    'dblclick': 'clickEdit',
     'click .btn-save': 'save',
     'click .btn-remove': 'remove',
-    'click .btn-edit': 'edit',
+    'click .btn-edit': 'clickEdit',
     'keyup input': 'keyCommand',
     'change td[rel="select"] input': 'selectOne'
   },
@@ -20,7 +20,8 @@ this.ExpenseView = Backbone.View.extend({
   initialize: function(options) {
     if(!this.model) throw "must supply model";
 
-    _.bindAll(this, 'render', 'edit', 'save', 'keyCommand', 'selectOne', 'deselect');
+    _.bindAll(this, 'render', 'edit', 'cancelEdit', '_clickOutside', 'clickEdit', 'save', 'keyCommand',
+                    'selectOne', 'deselect');
 
     this.parent = options.parent;
 
@@ -80,37 +81,58 @@ this.ExpenseView = Backbone.View.extend({
     }
   },
 
-  edit: function(ev) {
+  clickEdit: function(ev) {
     var $td = null;
+
+    if(this.editing) return;
 
     if(ev && ev.target) {
       $td = ev.target.tagName === 'TD' ?
         $(ev.target) : $(ev.target).parents('td');
     }
 
+    // FIXME: clean this up
     if($td && $td.attr('rel') === 'select') return;
 
-    if(!$(this.el).hasClass('editable')) {
-      $(this.el).siblings().removeClass('editable');
-      $(this.el).addClass('editable');
+    var $input = $td ? $('input', $td) : null;
+    if(!$input || !$input.length) $input = $($('td input', this.el).get(1));
 
-      // Autocompletion
-      // FIXME: this is spaghetti coding
-      $('input[name="category"]', this.el).typeahead({
-        source: Expenses.getValues('category')
-      });
-      $('input[name="who"]', this.el).typeahead({
-        source: Expenses.getValues('who')
-      });
+    this.edit($input.length ? $input.attr('name') : null);
+  },
 
-      var $input = $td ? $('input', $td) : null;
+  _clickOutside: function() {
+    this.cancelEdit();
+  },
 
-      if(!$input || !$input.length) {
-        $input = $($('td input', this.el).get(1));
-      }
+  cancelEdit: function() {
+    $(this.el).removeClass('editable');
+    this.editing = false;
+    $('html').off('click', this._clickOutside);
+  },
+  edit: function(field) {
+    this.trigger('editing');
+    this.editing = true;
 
-      $input.focus();
-    }
+    field = field || 'label';
+
+    $(this.el).addClass('editable');
+
+    // Autocompletion
+    // FIXME: this is spaghetti coding
+    $('input[name="category"]', this.el).typeahead({
+      source: Expenses.getValues('category')
+    });
+    $('input[name="who"]', this.el).typeahead({
+      source: Expenses.getValues('who')
+    });
+
+    // If user clicks outside the row, cancel edit
+    $('html').on('click', this._clickOutside);
+    $(this.el).bind('click', function(ev) { ev.stopPropagation(); });
+
+    // Focus the input element
+    var $input = $('input[name="' + field + '"]', this.el);
+    $input.focus();
   },
   remove: function() {
     if(confirm('Are you sure?')) {
@@ -133,7 +155,7 @@ this.ExpenseView = Backbone.View.extend({
 
     this.model.save(attrs);
 
-    $(this.el).removeClass('editable');
+    this.cancelEdit();
 
     // FIXME: Fix sorting that doesn't reset the view state
     //this.model.collection.sort();
@@ -350,13 +372,15 @@ this.ExpensesView = Backbone.View.extend({
     if(!this.collection) throw "must supply collection";
 
     _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter',
-              'filterOne', 'refreshFilter', 'updateSelectAll', 'selectAll');
+              'filterOne', 'refreshFilter', 'updateSelectAll', 'selectAll', 'cancelPreviousEdit');
 
     this._views = {};
 
     this.updateSelectAll = _.debounce(this.updateSelectAll, 50);
     this.on('expense:select', this.updateSelectAll);
     this.collection.on('add remove reset', this.updateSelectAll);
+
+    this.on('expense:editing', this.cancelPreviousEdit);
 
     this.collection.on('add', this.addOne);
     this.collection.on('remove', this.removeOne);
@@ -371,6 +395,13 @@ this.ExpensesView = Backbone.View.extend({
     this.render();
   },
 
+  cancelPreviousEdit: function(view) {
+    _.each(this._views, function(otherView) {
+      if(otherView !== view && otherView.editing) {
+        otherView.cancelEdit();
+      }
+    });
+  },
 
   //////////////////
   // Selections

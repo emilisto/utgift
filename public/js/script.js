@@ -240,6 +240,10 @@ this.ClassFilterView = Backbone.View.extend({
     var html = '<li class="nav-header">' + this.label + '</li>';
 
     var classes = this.collection.getValues(this.attr);
+
+    // FIXME: quick and dirty sorting
+    classes.reverse();
+
     _.each(classes, function(className) {
       html += '<li><a href="#" rel="' + className + '">' + className + '</a></li>\n';
     });

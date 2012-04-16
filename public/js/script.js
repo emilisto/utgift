@@ -379,7 +379,7 @@ this.ExpensesView = Backbone.View.extend({
 
     _.bindAll(this, 'addOne', 'resetViews', 'render', 'sortColumn', 'filter', 'filterOne',
                     'refreshFilter', 'updateSelectAll', 'selectAll', 'cancelPreviousEdit',
-                    '_clearFilterCache', 'resetPagination');
+                    '_clearFilterCache', 'resetPagination', 'isEditing');
 
     this._views = {};
 
@@ -405,6 +405,11 @@ this.ExpensesView = Backbone.View.extend({
     this.collection.on('filter:clear filter:set', this.resetPagination);
     this.on('search', this.resetPagination);
 
+    var view = this;
+    this.collection.on('change', _.debounce(function() {
+      if(!view.isEditing()) view.collection.sort();
+    }, 50));
+
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Re-render the whole view on (add, remove, reset) to manage the three contraints
@@ -420,6 +425,11 @@ this.ExpensesView = Backbone.View.extend({
     this.render();
   },
 
+  isEditing: function() {
+    return _.any(this._views, function(view) {
+      return view.editing;
+    });
+  },
   cancelPreviousEdit: function(view) {
     _.each(this._views, function(otherView) {
       if(otherView !== view && otherView.editing) {

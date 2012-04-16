@@ -100,7 +100,13 @@ this.ExpenseView = Backbone.View.extend({
     this.edit($input.length ? $input.attr('name') : null);
   },
 
-  _clickOutside: function() {
+  _clickOutside: function(ev) {
+    // jQuery `datepicker` and Twitter `typeahead` create elements directly in body
+    // - catch the bastards!
+    var $target = $(ev.target);
+    if($target.parents('.ui-datepicker').length) return;
+    if($target.parents('.typeahead').length) return;
+
     this.cancelEdit();
   },
 
@@ -126,6 +132,10 @@ this.ExpenseView = Backbone.View.extend({
       source: Expenses.getValues('who')
     });
 
+    $('input[name="date"]', this.el).datepicker({
+      dateFormat: 'd M -y'
+    });
+
     // If user clicks outside the row, cancel edit
     $('html').on('click', this._clickOutside);
     $(this.el).bind('click', function(ev) { ev.stopPropagation(); });
@@ -144,15 +154,27 @@ this.ExpenseView = Backbone.View.extend({
 
     var attrs = {};
 
-    _.each(['label', 'amount', 'category', 'who'], function(name) {
+    _.each(['date', 'label', 'amount', 'category', 'who'], function(name) {
       var input = $('[name=' + name + ']', self.el),
           span = input.siblings('span');
 
       $(span).html(input.val());
-      attrs[name] = input.val();
+
+      var val = input.val();
+      if(name === 'date') {
+
+        // FIXME: this is horribly error-prone, date format is assumed in 18 different places,
+        //         - do some systematic date-handling damnit.
+        var parts = val.match(/(\d+) (\w+) -(\d+)/);
+        var dateStr = parts[1] + ' ' + parts[2] + ' 20' + parts[3];
+        val = new Date(dateStr);
+      } 
+
+      attrs[name] = val;
 
     });
 
+      console.log('setting attrs: %o', attrs);
     this.model.save(attrs);
 
     this.cancelEdit();
@@ -421,7 +443,7 @@ this.ExpensesView = Backbone.View.extend({
     var view = this;
     this.collection.on('change', _.debounce(function() {
       if(!view.isEditing()) view.collection.sort();
-    }, 100));
+    }, 200));
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //

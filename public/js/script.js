@@ -437,7 +437,6 @@ this.ExpensesView = Backbone.View.extend({
         .removeAttr('checked')
         .trigger('change');
     }
-    console.log(nSelected);
   },
 
   // Used for Shift + Up / Down, to edit the expense before or after
@@ -881,8 +880,6 @@ this.AddBatchView = Backbone.View.extend({
       }
 
       this.collection.add(expenses);
-
-      console.log(this.collection);
 
       $textarea.val('');
 

@@ -7,12 +7,8 @@
   //
   // IndexedCollection
   //
-  // TODO:
-  //  - create filters from this idea
-  //
 
   this.IndexedCollection = function(options) {
-    console.log('IndexedCollection: constructor function');
     var ret = Backbone.Collection.apply(this, arguments);
 
     _.bindAll(this, '_indexedRemove', '_indexedChange', '_indexedReset', '_indexedAdd',
@@ -189,7 +185,6 @@
   };
 
   ///
-
 
   ////////////////////////////////////
   //

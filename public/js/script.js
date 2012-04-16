@@ -166,7 +166,7 @@ this.ExpenseView = Backbone.View.extend({
     json.selected = !!this._selected;
 
     var date = new Date(this.model.get('date'));
-    json.date = date.format('d mmm');
+    json.date = date.format('d mmm -yy');
     $(this.el).html( this.template(json) );
   }
 

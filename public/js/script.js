@@ -641,10 +641,7 @@ this.ExpensesView = Backbone.View.extend({
     var total = 0;
 
     _.each(this.getModels(), function(model) {
-      var $el = $(views[model.cid].el);
-      if($el.is(':visible')) {
-        total += model.get('amount');
-      }
+      total += model.get('amount');
     });
 
     // FIXME
@@ -787,7 +784,7 @@ this.AppView = Backbone.View.extend({
     'click .add-one': 'create',
     'click .add-batch': 'showAddBatch',
     'keyup #search input': 'search',
-    'click #search .cancel': 'cancelSearch',
+    'click #search .cancel .icon-remove-sign': 'cancelSearch',
     'click #search-all': 'searchAll'
   },
 

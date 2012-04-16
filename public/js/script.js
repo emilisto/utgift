@@ -392,8 +392,17 @@ this.ExpensesView = Backbone.View.extend({
     this._pageIncrement   = 20;
     this._pageSize        = this._defaultPageSize;
 
-    // Render is omnipotent, so debounce it
-    this.render = _.debounce(this.render, 50);
+
+    // Debounce omnipotent functions
+    
+      // debouncing of _updateTotal not needed, since it is only called from render for now
+      // this._updateTotal = _.debounce(this._updateTotal, 50);
+      //
+      // Idea: create a mix of throttle and debounce, that executes function immediately,
+      //       but if invoked again within N ms, debounces it N ms
+      //
+
+      this.render = _.debounce(this.render, 50);
 
     // Default sorting
     this.collection.sortAttr = 'date';
@@ -412,7 +421,7 @@ this.ExpensesView = Backbone.View.extend({
     var view = this;
     this.collection.on('change', _.debounce(function() {
       if(!view.isEditing()) view.collection.sort();
-    }, 50));
+    }, 100));
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -602,6 +611,7 @@ this.ExpensesView = Backbone.View.extend({
 
   resetViews: function() {
     _.each(this.getModels(), this.addOne);
+    this._updateTotal();
   },
   addOne: function(model) {
     if(this._pageVisible >= this._pageSize) return;
@@ -615,8 +625,6 @@ this.ExpensesView = Backbone.View.extend({
     this.$tbody.append(view.el);
 
     view.delegateEvents();
-
-    this._updateTotal();
   },
   findView: function(model) {
     var self = this;
@@ -640,7 +648,7 @@ this.ExpensesView = Backbone.View.extend({
 
 
   _total: 0,
-  _updateTotal: _.debounce(function() {
+  _updateTotal: function() {
     var views = this._views;
     var total = 0;
 
@@ -654,16 +662,16 @@ this.ExpensesView = Backbone.View.extend({
       this._total = total;
       $('tr.total .amount').html(Math.round(total, 2));
     }
-  }, 50),
+  },
 
 
   render: function() {
     $(this.el).html( this.template({
-      pagePercentage: Math.round(this._pageVisible / this.filterModels().length * 100)
+      pagePercentage: Math.round(this._pageVisible / this.filterModels().length * 100),
+      total: this._total ? this._total : ''
     }));
     this.$tbody = $('#main tbody', this.el);
 
-    this._total = 0;
     this._pageVisible = 0;
     this.resetViews();
 

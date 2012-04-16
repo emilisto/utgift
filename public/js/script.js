@@ -370,16 +370,30 @@ this.ExpensesView = Backbone.View.extend({
 
   events: {
     'click th': 'sortColumn',
-    'click th[rel="select"] input': 'selectAll'
+    'click th[rel="select"] input': 'selectAll',
+    'click #pagination a': 'clickShowMore'
   },
 
   initialize: function(parent) {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'removeOne', 'addAll', 'render', 'sortColumn', 'filter',
-              'filterOne', 'refreshFilter', 'updateSelectAll', 'selectAll', 'cancelPreviousEdit');
+    _.bindAll(this, 'addOne', 'resetViews', 'render', 'sortColumn', 'filter', 'filterOne',
+                    'refreshFilter', 'updateSelectAll', 'selectAll', 'cancelPreviousEdit',
+                    '_clearFilterCache', 'resetPagination');
 
     this._views = {};
+
+    // Init pagination
+    this._defaultPageSize = 20;
+    this._pageIncrement   = 20;
+    this._pageSize        = this._defaultPageSize;
+
+    // Render is omnipotent, so debounce it
+    this.render = _.debounce(this.render, 50);
+
+    // Default sorting
+    this.collection.sortAttr = 'date';
+    this.collection.sort();
 
     this.updateSelectAll = _.debounce(this.updateSelectAll, 50);
     this.on('expense:select', this.updateSelectAll);
@@ -387,15 +401,21 @@ this.ExpensesView = Backbone.View.extend({
 
     this.on('expense:editing', this.cancelPreviousEdit);
 
-    this.collection.on('add', this.addOne);
-    this.collection.on('remove', this.removeOne);
+    this.collection.on('filter:clear filter:set', this._clearFilterCache);
+    this.collection.on('filter:clear filter:set', this.resetPagination);
+    this.on('search', this.resetPagination);
 
-    this.collection.on('add remove', this.refreshFilter);
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Re-render the whole view on (add, remove, reset) to manage the three contraints
+    // (filter, search, pagination). This is usually handled more efficiently by removing and
+    // adding single views, but with these 3 constraints the logic becomes much more involved.
+    //
+    // It works unless it PROVES to be a practical bottleneck.
+    //
+    this.collection.on('add remove reset', this.render);
 
-    this.collection.on('reset', this.render);
-
-    this.collection.sortAttr = 'date';
-    this.collection.sort();
+    window.ev = this;
 
     this.render();
   },
@@ -487,21 +507,24 @@ this.ExpensesView = Backbone.View.extend({
     var views = this._views;
 
     if(str) {
+      this.trigger('search', str);
+
       this._currentFilter = str;
       this.collection.each(function(model) {
-        var $el = $(views[model.cid].el);
-        var matches = view.filterOne(model, str);
-        matches ? $el.addClass('matching').show() : $el.removeClass('matching').hide();
+        // var $el = $(views[model.cid].el);
+        //matches ? $el.addClass('matching').show() : $el.removeClass('matching').hide();
+
+        model.matches = view.filterOne(model, str);
+
       });
     } else {
-      // Show all
-      $('table#main tr', this.el)
-        .removeClass('matching').show();
+      this.collection.each(function testing(model) { delete model.matches; });
       this._currentFilter = '';
     }
 
-    this._updateTotal();
-    this.updateSelectAll();
+    this.render();
+    // this._updateTotal();
+    // this.updateSelectAll();
   },
 
   filterOne: function(model) {
@@ -516,7 +539,71 @@ this.ExpensesView = Backbone.View.extend({
   },
 
 
+  clickShowMore: function(ev) {
+    this.showMore();
+    ev.preventDefault();
+  },
+  _pageVisible: 0,
+  hasMore: function() {
+    return this._pageSize < this.filterModels().length;
+  },
+  showMore: function() {
+    if(this.hasMore()) {
+      this._pageSize += this._pageIncrement;
+      this.render();
+    } else {
+      console.log('emptied!');
+    }
+  },
+  resetPagination: function() {
+    this._pageSize = this._defaultPageSize;
+    this.render();
+  },
 
+  _filterCache: {},
+  _clearFilterCache: function() {
+    this._filterCache = {};
+  },
+  filterModels: function() {
+    if(this._currentFilter) {
+
+      if(!this._filterCache[this._currentFilter]) {
+        this._filterCache = {};
+        var models = this.collection.filter(function(model) { return model.matches; });
+        this._filterCache[this._currentFilter] = models;
+      }
+
+      return this._filterCache[this._currentFilter];
+    } else {
+      return Array.prototype.slice.call(this.collection.models);
+    }
+  },
+  getModels: function() {
+    var models = this.filterModels();
+    // Pagination here
+    models = models.slice(0, this._pageSize);
+
+    return models;
+  },
+
+  resetViews: function() {
+    _.each(this.getModels(), this.addOne);
+  },
+  addOne: function(model) {
+    if(this._pageVisible >= this._pageSize) return;
+    this._pageVisible++;
+
+    var view = this.findView(model);
+
+    if(!this.filterOne(model)) $(view.el).hide();
+
+    // This halves the time this method takes
+    this.$tbody.append(view.el);
+
+    view.delegateEvents();
+
+    this._updateTotal();
+  },
   findView: function(model) {
     var self = this;
     var view = this._views[model.cid];
@@ -537,37 +624,13 @@ this.ExpensesView = Backbone.View.extend({
     return view;
   },
 
-  addOne: function(model) {
-    var view = this.findView(model);
-
-    if(!this.filterOne(model)) $(view.el).hide();
-
-    // This halves the time this method takes
-    this.$tbody.append(view.el);
-
-    view.delegateEvents();
-
-    this._views[model.cid] = view;
-
-    this._updateTotal();
-  },
-  removeOne: function(model) {
-    var view = this._views[model.cid];
-    if(view) $(view.el).remove();
-
-    this._updateTotal();
-  },
-  addAll: function() {
-    this.collection.each(this.addOne);
-    this.filter(this._currentFilter);
-  },
 
   _total: 0,
   _updateTotal: _.debounce(function() {
     var views = this._views;
     var total = 0;
 
-    this.collection.each(function(model) {
+    _.each(this.getModels(), function(model) {
       var $el = $(views[model.cid].el);
       if($el.is(':visible')) {
         total += model.get('amount');
@@ -584,10 +647,22 @@ this.ExpensesView = Backbone.View.extend({
 
 
   render: function() {
-    $(this.el).html( this.template() );
+    $(this.el).html( this.template({
+      pagePercentage: Math.round(this._pageVisible / this.filterModels().length * 100)
+    }));
     this.$tbody = $('#main tbody', this.el);
+
     this._total = 0;
-    this.addAll();
+    this._pageVisible = 0;
+    this.resetViews();
+
+    var percentage = Math.round(this._pageVisible / this.filterModels().length * 100);
+    $('.progress .bar', this.el).css('width', percentage + '%');
+    if(!this.hasMore()) {
+      $('#pagination', this.el).addClass('no-more');
+      $('#pagination .progress', this.el).addClass('progress-striped');
+    }
+
     this.delegateEvents();
   }
 });

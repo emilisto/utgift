@@ -269,14 +269,17 @@
     },
 
     setFilter: function(attr, val) {
+      this.trigger('filter:set', attr, val);
       this._filters[attr] = val;
       this._update();
     },
     clearFilter: function(attr) {
+      this.trigger('filter:clear', attr);
       delete this._filters[attr];
       this._update();
     },
     clearAllFilters: function() {
+      this.trigger('filter:clearAll', attr);
       this._filters = {};
       this._update();
     }

@@ -371,7 +371,7 @@ this.ExpensesView = Backbone.View.extend({
   events: {
     'click th': 'sortColumn',
     'click th[rel="select"] input': 'selectAll',
-    'click #pagination a': 'clickShowMore'
+    'click #pagination': 'clickShowMore'
   },
 
   initialize: function(parent) {
@@ -640,7 +640,7 @@ this.ExpensesView = Backbone.View.extend({
     var views = this._views;
     var total = 0;
 
-    _.each(this.getModels(), function(model) {
+    _.each(this.filterModels(), function(model) {
       total += model.get('amount');
     });
 
@@ -648,7 +648,7 @@ this.ExpensesView = Backbone.View.extend({
     total = Math.round( total * 100 ) / 100
     if(this._total !== total) {
       this._total = total;
-      $('table#total td[rel="amount"]').html(Math.round(total, 2));
+      $('tr.total .amount').html(Math.round(total, 2));
     }
   }, 50),
 
@@ -666,8 +666,7 @@ this.ExpensesView = Backbone.View.extend({
     var percentage = Math.round(this._pageVisible / this.filterModels().length * 100);
     $('.progress .bar', this.el).css('width', percentage + '%');
     if(!this.hasMore()) {
-      $('#pagination', this.el).addClass('no-more');
-      $('#pagination .progress', this.el).addClass('progress-striped');
+      $('tr#pagination', this.el).addClass('no-more');
     }
 
     this.delegateEvents();

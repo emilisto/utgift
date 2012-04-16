@@ -16,6 +16,13 @@ table.expenses {
   th, td {
     vertical-align: middle;
   }
+  tfoot {
+    // th { border: none; }
+    i.icon-dots {
+      float: left;
+    }
+    tr#pagination.no-more { display: none; }
+  }
   tr {
     .btn-group { visibility: hidden; }
     &:hover .btn-group { visibility: visible; }
@@ -95,6 +102,46 @@ table.expenses {
   }
 }
 
+i.icon-dots {
+  background-position: 0 0;
+  background: url('../img/icon-more.png');
+  height: 22px;
+  width: 7px;
+  opacity: 0.7;
+}
+
+#pagination th {
+  cursor: pointer;
+  // .clearfix();
+
+  p, a {
+    display: block;
+    float: left;
+    line-height: 30px;
+    margin: 0px 10px;
+  }
+  .progress {
+    width: 250px;
+    float: left;
+    height: 30px;
+    margin-bottom: 0px;
+    .bar {
+      background-color: #0E90D2;
+      height: 30px;
+      .transition(none);
+    }
+  }
+  #no-more { display: none; }
+  &.no-more {
+    .progress .bar {
+      background-color: #CCC;
+    }
+    #more { display: none; }
+    #no-more { display: block; }
+  }
+}
+
+
 #search {
   input {
     z-index: 1;
@@ -126,38 +173,7 @@ table.expenses {
   a { margin: 0px 5px; }
 }
 
-#pagination {
-  cursor: pointer;
-  .clearfix();
-  margin: 10px 0px;
 
-  &:hover {
-  }
-  p, a {
-    display: block;
-    float: left;
-    line-height: 30px;
-    margin: 0px 10px;
-  }
-  .progress {
-    width: 250px;
-    float: left;
-    height: 30px;
-    .bar {
-      background-color: #0E90D2;
-      height: 30px;
-      .transition(none);
-    }
-  }
-  #no-more { display: none; }
-  &.no-more {
-    .progress .bar {
-      background-color: #CCC;
-    }
-    #more { display: none; }
-    #no-more { display: block; }
-  }
-}
 
 #modal-add-batch.modal {
   margin-top: -400px;

@@ -663,6 +663,12 @@ this.ExpensesView = Backbone.View.extend({
     this._pageVisible = 0;
     this.resetViews();
 
+    if(this.collection.sortAttr) {
+      var sortColSelector = 'thead th[rel="' + this.collection.sortAttr + '"]';
+      var upOrDown = this.reverseSort ? 'down' : 'up';
+      $(sortColSelector + ' .icon-chevron-' + upOrDown, this.el).css('display', 'inline-block');
+    }
+
     var percentage = Math.round(this._pageVisible / this.filterModels().length * 100);
     $('.progress .bar', this.el).css('width', percentage + '%');
     if(!this.hasMore()) {

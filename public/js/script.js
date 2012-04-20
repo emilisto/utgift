@@ -30,6 +30,8 @@ this.ExpenseView = Backbone.View.extend({
     // rendering.
     this.model.on('change', this.render);
 
+    this._selected = !!this.model.get('selected');
+
     var view = this;
     this.model.on('destroy', function() {
       $(view.el).detach();
@@ -37,7 +39,10 @@ this.ExpenseView = Backbone.View.extend({
 
     this.render();
 
+    if(this._selected) this.selectOne();
+
     if(this.model.get('new')) {
+      // FIXME: this is unreliable
       _.delay(this.edit, 50);
     }
   },
@@ -46,6 +51,8 @@ this.ExpenseView = Backbone.View.extend({
     if(this._selected) {
       this._selected = false;
       this.trigger('select', false);
+      console.log('deselected!');
+      this.model.set({ 'selected': false });
       this.render();
     }
   },
@@ -55,6 +62,9 @@ this.ExpenseView = Backbone.View.extend({
       var state = $('input[type="checkbox"]', self.el).is(':checked');
       self._selected = state;
       self.trigger('select', state);
+      console.log('triggering!');
+
+      self.model.set({ 'selected': state });
     });
   },
 
@@ -174,7 +184,6 @@ this.ExpenseView = Backbone.View.extend({
 
     });
 
-      console.log('setting attrs: %o', attrs);
     this.model.save(attrs);
 
     this.cancelEdit();
@@ -336,6 +345,8 @@ this.SelectedView = Backbone.View.extend({
     var n = coll.length;
     $('#edit-all h2', this.el).html(n + ' selected');
 
+    console.log('selected: %d', n);
+
     // Show panel if n >= 1
     if(!n) {
       $('#edit-all', this.el).slideUp();
@@ -380,6 +391,7 @@ this.SelectedView = Backbone.View.extend({
   },
   cancel: function() {
     _.each(this._views, function(view) {
+      console.log('deselect!');
       view.deselect();
     });
   },
@@ -389,16 +401,18 @@ this.SelectedView = Backbone.View.extend({
     _.each(this.keys, function(key) {
       var val = $('input[name="' + key + '"]', self.el).val();
 
-      if(key === 'date') {
+      if(val) {
+        if(key === 'date') {
 
-        // FIXME: this is horribly error-prone, date format is assumed in 18 different places,
-        //         - do some systematic date-handling damnit.
-        var parts = val.match(/(\d+) (\w+) -(\d+)/);
-        var dateStr = parts[1] + ' ' + parts[2] + ' 20' + parts[3];
-        val = new Date(dateStr);
+          // FIXME: this is horribly error-prone, date format is assumed in 18 different places,
+          //         - do some systematic date-handling damnit.
+          var parts = val.match(/(\d+) (\w+) -(\d+)/);
+          var dateStr = parts[1] + ' ' + parts[2] + ' 20' + parts[3];
+          val = new Date(dateStr);
+        }
+
+        values[key] = val;
       }
-
-      if(val) values[key] = val;
     });
 
     this.collection.each(function(model) {
@@ -445,7 +459,7 @@ this.ExpensesView = Backbone.View.extend({
 
   events: {
     'click th': 'sortColumn',
-    'click th[rel="select"] input': 'selectAll',
+    'click th[rel="select"] input': 'clickSelectAll',
     'click #pagination': 'clickShowMore'
   },
 
@@ -453,8 +467,8 @@ this.ExpensesView = Backbone.View.extend({
     if(!this.collection) throw "must supply collection";
 
     _.bindAll(this, 'addOne', 'resetViews', 'render', 'sortColumn', 'filter', 'filterOne',
-                    'refreshFilter', 'updateSelectAll', 'selectAll', 'cancelPreviousEdit',
-                    '_clearFilterCache', 'resetPagination', 'isEditing');
+                    'refreshFilter', 'updateSelectAll', 'clickSelectAll', 'cancelPreviousEdit',
+                    '_clearFilterCache', 'resetPagination', 'isEditing', 'selectAll', 'deselectAll');
 
     this._views = {};
 
@@ -538,18 +552,24 @@ this.ExpensesView = Backbone.View.extend({
     }
   },
   selectAll: function() {
+    $('td[rel="select"] input')
+      .filter(function() { return $(this).parents('tr').is(':visible'); })
+      .attr('checked', 'checked')
+      .trigger('change');
+  },
+  deselectAll: function() {
+    $('td[rel="select"] input')
+      .removeAttr('checked')
+      .trigger('change');
+  },
+  clickSelectAll: function() {
     var $selectAll = $('th input[name="select"]', this.el);
     var nSelected = $('td input[name="select"]:checked', this.el).length;
 
     if($selectAll.is(':checked')) {
-      $('td[rel="select"] input')
-        .filter(function() { return $(this).parents('tr').is(':visible'); })
-        .attr('checked', 'checked')
-        .trigger('change');
+      this.selectAll();
     } else {
-      $('td[rel="select"] input')
-        .removeAttr('checked')
-        .trigger('change');
+      this.deselectAll();
     }
   },
 
@@ -704,8 +724,11 @@ this.ExpensesView = Backbone.View.extend({
     if(!view) {
       view = new ExpenseView({ model: model, parent: this });
 
+      console.log('meeeep');
       // Proxy events from view
       view.on('all', function(eventName) {
+        if(window.loggit) console.log('event: %s %o', eventName, arguments);
+
         var args = Array.prototype.slice.call(arguments, 1);
         args = [ 'expense:' + eventName, view ].concat(args);
         self.trigger.apply( self, args);
@@ -873,16 +896,37 @@ this.AppView = Backbone.View.extend({
     'click .add-batch': 'showAddBatch',
     'keyup #search input': 'search',
     'click #search .cancel .icon-remove-sign': 'cancelSearch',
-    'click #search-all': 'searchAll'
+    'click #search-all': 'searchAll',
+    'click #tabbar li a': 'showTab'
+  },
+
+  showSelected: function() {
+    $('#tabbar li a[rel="selected"]', this.el).click();
+  },
+  showTab: function(ev) {
+
+    var rel = $(ev.target).attr('rel');
+    console.log(rel);
+    if(rel === 'selected') {
+      this.filteredExpenses.setFilter('selected', true);
+    } else {
+      this.filteredExpenses.clearFilter('selected');
+    }
+
   },
 
   initialize: function() {
-    _.bindAll(this, 'render', 'create', 'showAddBatch', 'search', 'cancelSearch');
+    _.bindAll(this, 'render', 'create', 'showAddBatch', 'search', 'cancelSearch', 'editCategory',
+                    'clearFilters', 'showTab', 'showSelected');
 
     this.collection = Expenses;
     this.filteredExpenses = window.Filtered = new FilteredCollection([], {
       parent: Expenses
     });
+
+    // this.filteredExpenses.bind('all', function(ev) {
+    //   console.log('expenses: %s %o', ev, arguments);
+    // });
 
     this.expensesView = new ExpensesView({ collection: this.filteredExpenses });
 
@@ -932,12 +976,26 @@ this.AppView = Backbone.View.extend({
     this.whoFilter.clearFilter();
     this.categoryFilter.clearFilter();
   },
+  clearFilters: function() {
+    _.each(this.filters, function(filter) { filter.clearFilter(); });
+  },
+  editCategory: function(label) {
+    var self = this;
+
+    this.clearFilters();
+    this.categoryFilter.setFilter(label);
+
+    // FIXME: don't rely on timers for this, since its unreliable
+    _.delay(function() {
+      self.expensesView.selectAll();
+    }, 200);
+  },
 
   cancelSearch: function(ev) {
     $('#search input', this.el).val('').trigger('keyup');
   },
   searchAll: function(ev) {
-    _.each(this.filters, function(filter) { filter.clearFilter(); });
+    this.clearFilters();
     ev.preventDefault();
   },
 
@@ -955,7 +1013,7 @@ this.AppView = Backbone.View.extend({
 
 
   showAddBatch: function() {
-    new AddBatchView;
+    new AddBatchView({ app: this });
   },
 
   create: function() {
@@ -971,6 +1029,7 @@ this.AppView = Backbone.View.extend({
   render: function() {
     $(this.el).html( this.template() );
 
+    var self = this;
     _.defer(_.bind(function() {
       $('#ExpensesView').append(this.expensesView.el);
       $('#SelectedView').append(this.selectedView.el);
@@ -979,7 +1038,9 @@ this.AppView = Backbone.View.extend({
       $('#filters').append(this.categoryFilter.el)
       $('#filters').append(this.monthFilter.el)
       $('#filters').append(this.whoFilter.el)
+
     }, this));
+
   }
 
 });
@@ -998,26 +1059,31 @@ this.AddBatchView = Backbone.View.extend({
   template: _.template( $('#add-batch-template').html() ),
 
   events: {
-    'paste textarea': 'batchAdd',
+    'paste #paste': 'batchAdd',
     'click .btn': 'close',
     'keyup #who': 'editWho'
   },
 
-  initialize: function() {
+  initialize: function(options) {
 
+    options = options || {};
     _.bindAll(this, 'render', 'batchAdd', 'close', 'editWho');
+
+    if(!options.app) throw "must inject App";
+
+    this.app = options.app;
 
     this.collection = new ExpenseList;
     this.expensesView = new ExpensesView({ collection: this.collection });
 
     $(this.el).appendTo('body');
-    $(this.el).modal({ show: true });
+    $(this.el).modal({ show: true, backdrop: false });
 
     this.editWho = _.throttle(this.editWho, 300);
 
     this.render();
 
-    $('textarea', this.el).focus();
+    $('#paste', this.el).focus();
 
     var view = this;
     $(this.el).on('hidden', function() {
@@ -1036,22 +1102,32 @@ this.AddBatchView = Backbone.View.extend({
   },
 
   batchAdd: function() {
-    $textarea = $('textarea', this.el);
+    var self = this;
+    var $input = $('#paste', this.el);
+    var defaultCategory = 'Just added';
+
     _.defer(_.bind(function() {
-      var str = $textarea.val();
+      var str = $input.val();
       var parser = new AccountParser;
       var expenses = parser.parse(str);
 
-      var who = this._who;
-      if(who) {
-        expenses = _.map(expenses, function(expense) {
-          return _.extend({ who: who }, expense);
-        });
-      }
+      expenses = _.map(expenses, function(expense) {
+        return new Expense(_.extend({
+          category: defaultCategory,
+          selected: true
+        }, expense));
+      });
 
-      this.collection.add(expenses);
+      Expenses.add(expenses);
+      // self.app.editCategory(defaultCategory);
 
-      $textarea.val('');
+      self.app.showSelected();
+
+      self.close();
+
+      $input.val('');
+
+      // $('#ExpensesView', self.el).show();
 
     }, this));
   },
@@ -1082,11 +1158,11 @@ $(function(){
 
   Expenses.fetch();
 
-  //Expenses.bind('all', function(ev) {
-    // if(!ev.match(/index:/)) {
+  Expenses.bind('all', function(ev) {
+    if(!ev.match(/index:/)) {
       //console.log('Expenses: %s %o', ev, arguments);
-    // }
-  //});
+    }
+  });
 
   var app = new AppView();
   $('body').append(app.el);

@@ -1,0 +1,406 @@
+/* 
+ * swedbank_ib_print.css
+ *
+ * REVISIONSHISTORIK
+ * Ver 1.0.6, 2009-06-08. frx
+ * - �kat avst�ndet mellan f�lt och f�ltnamn, f�r att �ven hantera l�ngre ord.
+ * Ver 1.0.5, 2008-02-12, fxb, tfl, 
+ * - Knappar vid utskrift
+ * Ver 1.0.4, 2008-01-08, tfl
+ * - Diverse buggfixar, bl a. h�gkontrast expanderbart inneh�ll
+ * Ver 1.0.3, 2007-11-20, tfl
+ * - Diverse buggfixar, bl a. utskrift
+ * Ver 1.0.2, 2007-10-12, tfl
+ * - Diverse buggfixar
+ * Ver 1.0.1, 2007-10-04, tfl, hwa, ara
+ * - En f�rsta version, med RIW-klasser bortrensade.
+ *
+ * Copyright (C) Swedbank AB (publ) 2007.
+ * All rights reserved.
+ */
+body{
+margin:15px;
+}
+.dubbel-sidnavigering-huvudmeny{
+font-weight:bold;
+line-height:1em;
+padding-top:5px;
+text-align:left;
+vertical-align:top;
+}
+.sidfot2{
+color:#000;
+border-top:1px solid #ccc;
+font-size:0.916em;
+height:25px;
+left:0;
+margin:0 12px;
+padding:3px 7px 0 3px;
+position:absolute;
+top:415px;
+width:740px;
+}
+.sidspalt2a-filoverforingsapplet{
+vertical-align:top;
+width:60%;
+}
+.sidspaltEngagemangA,.sidspaltEngagemangB,.sidspalt3d{
+vertical-align:top;
+}
+.sidspalt3a,.sidspalt3b{
+vertical-align:top;
+width:210px;
+}
+.sidspalt3c{
+vertical-align:top;
+width:300px;
+}
+.sidspalt3e{
+vertical-align:top;
+width:430px;
+}
+.sidspalt3-marginal{
+width:10px;
+}
+.sidspalt6-marginal {
+width:10px;
+}
+.sidspalt4a,.sidspalt4b,.sidspalt4c{
+vertical-align:top;
+width:32%;
+}
+.sidspalt4-marginal{
+width:1.25em;
+}
+.sidspalt5a{
+vertical-align:top;
+width:70%;
+}
+.sidspalt5b{
+vertical-align:top;
+width:28%;
+}
+.sidspalt5b .sektion{
+margin-bottom:1.25em;
+}
+.sidspalt6a{
+vertical-align:top;
+width:78%;
+}
+.sidspalt6b{
+vertical-align:top;
+width:22%;
+}
+#main-nav .disabled{
+border-color:#ccc;
+border-style:solid;
+border-width:0 1px 0 0;
+color:#999;
+cursor:default;
+font-weight:700;
+letter-spacing:1px;
+text-decoration:none;
+padding:0 0.7em;
+}
+#main-nav a:active,#main-nav a:visited{
+border-style:solid;
+border-width:0 1px 0 0;
+border-color:#ccc;
+color:#ea5e0d;
+font-weight:bold;
+letter-spacing:1px;
+padding:0 0.7em 0 0.7em;
+text-decoration:none;
+}
+#main-nav,.menu-item-label{
+font-size:0.916em;
+font-family:Arial, Helvetica, sans-serif;
+}
+.menu-item-focus{
+background-color:#d9d9d9;
+color:#222;
+cursor:hand;
+cursor:pointer;
+padding:0.25em 0.916em;
+text-decoration:none;
+}
+.menu-item-disabled{
+background-color:#fff;
+cursor:default;
+padding:0.25em 0.916em;
+}
+a.top-level,a.top-level:link,a.top-level:active,a.top-level:hover,a.top-level:visited{
+font:bold 1.1em Arial, Helvetica, sans-serif;
+color:#ea5e0d;
+cursor:hand;
+cursor:pointer;
+padding:0;
+text-decoration:none;
+}
+.top-level-selected{
+font:bold 1.1em Arial, Helvetica, sans-serif;
+color:#222;
+cursor:normal;
+padding:0;
+}
+.top-level-separator{
+color:#999;
+font-weight:normal;
+margin-left:0.166em;
+}
+.menu{
+background-color:#fff;
+border:1px solid #999;
+padding:5px 0;
+}
+.menu-item{
+background-color:#fff;
+color:#222;
+padding:0.25em 0.916em;
+}
+.sub-menu-icon{
+margin-top:0.25em;
+}
+.mellanrubrik2{
+color:#000;
+margin:0;
+font-weight:bold;
+}
+.brodtextrubrik{
+font-weight:bold;
+margin:0;
+}
+.brodtextrubrik2{
+color:#000;
+font-weight:bold;
+margin:0;
+}
+.nyhetsrubrik,.nyhetsrubrikLest{
+font-weight:bold;
+margin:4px 0 0;
+padding:0;
+}
+.olast,.meddelande-olest{
+font-weight:bold;
+}
+.brodtext{
+margin:0 0 0.416em;
+}
+.brodtext2{
+color:#000;
+margin:0 0.416em 0.416em;
+}
+.brodtext-botten{
+margin:0 0.416em 0.416em;
+}
+.nyhetstext{
+margin:0 0 0.7em;
+padding:0;
+}
+#page-header .logo{
+margin:1.25em 0 1.25em 0;
+}
+#page-header h1{
+padding:1.25em 0 1.25em 0.6em;
+font-size:1.83em;
+}
+.sektion-huvud2,.sektion-huvud3,.sektion-huvud4{
+background:transparent none repeat scroll 0%;
+border-color:#000;
+border-style:solid;
+border-width:0 0 1pt;
+margin:0;
+padding:0;
+}
+.sektion-huvud2:after,.sektion-huvud3:after,.sektion-huvud4:after{
+content:".";
+display:block;
+height:0;
+clear:both;
+visibility:hidden;
+}
+.sektion-huvud-lenk{
+border:0 none;
+text-align:center;
+}
+.tabell-cell-summering3,.tabell-cell-text{
+padding:0.25em;
+}
+.tabell-cell-summering3,.tabell-cell-markerad{
+font-weight:bold;
+}
+caption.felt-rubrik,caption.felt-rubrik2{
+font-size:1em;
+}
+.identifiering .kontrollnummer,.signering .kontrollnummer{
+letter-spacing:1px;
+}
+.identifiering .seksiffra{
+border:1px #ff9900 solid;
+padding:0 0.167em 0 0.167em;
+margin-right:1px;
+letter-spacing:normal;
+}
+.signering .belopp,.signering .seksiffror{
+border:1px #ff9900 solid;
+padding:0 0.167em 0 0.167em;
+margin-right:1px;
+}
+.inmatningsfelt-summering{
+background:#EDECE6 none repeat scroll 0%;
+font-weight:bold;
+text-align:right;
+}
+ .form-group{
+margin:0;
+}
+.form-group .row{
+border-bottom:1pt dotted #000;
+clear:both;
+padding:0.25em;
+}
+.form-group .row .fieldname{
+clear:left;
+float:left;
+font-size:0.916em;
+font-weight:700;
+width:10em;
+}
+.form-group .bottom{
+border-bottom:medium none;
+}
+.field-group ul{
+list-style-image:none;
+list-style-position:outside;
+list-style-type:none;
+margin:0;
+padding:0;
+}
+.field-group li{
+clear:left;
+padding:0.25em 0.25em 0.5em 0;
+}
+.field-group .field-header{
+font-size:1em;
+font-weight:bold;
+line-height:1.45em;
+padding:0 0.25em 0.25em 0;
+text-align:left;
+}
+.field-group .field-name{
+border-bottom:1pt dotted #000;
+clear:both;
+float:left;
+font-size:0.916em;
+font-weight:bold;
+line-height:1.45em;
+width:15em;
+}
+.field-group .bottom .field-name{
+border-bottom:0;
+}
+.field-group .field{
+line-height:1.33em;
+white-space:nowrap;
+}
+.inre-botten,.field-group .bottom .field-name{
+border-bottom:0 none;
+}
+.positivt{
+color:#567688;
+}
+.negativt{
+color:#b9666a;
+}
+.form-element{
+padding-bottom:0.42em;
+padding-left:0.25em;
+padding-top:0.42em;
+}
+.varning-sektion-huvud{
+background:transparent none repeat scroll 0%;
+padding:2px 0;
+}
+.varning-sektion{
+border:2pt solid #FFDD00;
+margin:8px;
+}
+.varning-rubrik{
+margin:0 3px;
+}
+.varning-meddelande{
+margin:5px;
+}
+.varning-sektion-innehall{
+padding:2px 3px 8px;
+width:59%;
+}
+.lenk-lista{
+margin:4px -3px -3px;
+}
+.innehall-niva1, .innehall-niva2{
+color:#000;
+font-weight:bold;
+margin:1em 0 0;
+color:#555;
+font-weight:bold;
+margin:0;
+margin-top:1em;
+}
+.innehall-niva2{
+color:#000;
+font-size:0.916em;
+}
+.anpassa-tkn-norm{
+font-family:Arial, Helvetica, sans-serif;
+}
+.anpassa-tkn-alt{
+font-family:Georgia,'Times New Roman',Times,serif;
+}
+.anpassa-kontrast-norm{
+background-color:transparent;
+color:#222;
+}
+.anpassa-kontrast-hog{
+background-color:#FFF;
+color:#222;
+}
+ .innehall-sida{
+color:#000000;
+ }
+.nyhetsbild{
+margin-right:5px;
+margin-top:4px;
+text-align:left;
+}
+.summering{
+font-weight:bold;
+padding-bottom:1em;
+padding-top:0.416em;
+}
+.stegvisning{
+padding:0 0.416em 3px 0;
+}
+.samlings-uppstellning{
+margin:0.8em;
+}
+.expanderbart-innehall{
+border:1px dashed #aeaeae;
+padding:5px;
+background-color:#fff;
+}
+.sida-knappuppstellning{
+clear:both;
+float:right;
+}
+@media print{
+.sida-knappuppstellning{
+display:none;
+}
+#user-info .print{
+visibility:hidden;
+}
+body{
+margin:0;
+}
+

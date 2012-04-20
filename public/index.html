@@ -135,16 +135,16 @@
                 <input type="text" name="date" value="20 mar">
               </td>
               <td rel="label">
-                <input type="text" name="label" value="Överföring Pappa">
+                <input type="text" name="label" value="" />
               </td>
               <td rel="amount">
-                <input type="text" name="amount" value="-200">
+                <input type="text" name="amount" value="" />
               </td>
               <td rel="category">
-                <input type="text" name="category" value="Misc">
+                <input type="text" name="category" value="" />
               </td>
               <td rel="who">
-                <input type="text" name="who" value="Katie">
+                <input type="text" name="who" value="" />
               </td>
               <td>
                 <a class="btn-save-all btn btn-primary">Save all</a>
@@ -275,9 +275,6 @@
                   <i class="icon-remove-sign"></i>
                   <a href="#" id="search-all">Search all</a>
                 </span>
-                <!-- <span class="cancel">-->
-                <!--   <i class="icon-remove-sign"></i>-->
-                <!-- </span>-->
               </div>
 
               <div id="add" class="btn-group">
@@ -292,46 +289,31 @@
                 </a>
               </div>
 
+
             </div>
           </div>
+
           <div class="row-fluid">
             <div class="span2" id="filters">
               <h2>Filters</h2>
               <!-- <ul id="months" class="nav nav-pills nav-stacked"></ul>-->
               <!-- <ul id="categories" class="nav nav-pills nav-stacked"></ul>-->
+
             </div>
             <div class="span10">
-
+              <div id="tabbar">
+                <ul class="nav nav-tabs">
+                  <li class="active"><a href="#all" rel="all" data-toggle="tab">All</a></li>
+                  <li><a href="#selected" rel="selected" data-toggle="tab">Selected</a></li>
+                </ul>
+              </div>
 
               <div id="SummedExpensesView"></div>
 
               <!-- ExpensesView goes here -->
+
               <div id="ExpensesView"></div>
               <div id="SelectedView"></div>
-
-<!--
-12-03-12	12-03-11 	YUKIKOS SUSHI AB 	 	-105,00	518,65
-12-03-12	12-03-11 	ICA SUPERMARKET 	 	-23,90	623,65
-12-03-12	12-03-11 	LON 	 	23000,90	623,65
-12-03-09	12-03-09 	CAPRI 	 	-65,00	647,55
-12-03-09	12-03-09 	Mobilladdning 816694161340 	 	-200,00	712,55
-12-03-09	12-03-08 	Överföring Gym Anton 	 	500,00	912,55
-12-03-08	12-03-08 	ICA SUPERMARKET 	 	-63,90	412,55
-12-03-07	12-03-07 	SJ REGIONAL STOC 	 	-75,00	476,45
-12-03-07	12-03-07 	CLAS OHLSON 420 	 	-79,00	551,45
-12-03-07	12-03-07 	ICA SUPERMARKET 	 	-120,00	630,45
-12-03-06	12-03-06 	SJ REGIONAL UPPS 	 	-75,00	750,45
-12-03-06	12-03-06 	Överföring Empa 	 	70,00	825,45
-12-03-06	12-03-06 	Pressbyran 8106 	 	-200,00	755,45
-12-03-06	12-03-05 	Överföring Papppa 	 	250,00	955,45
-12-03-05	12-03-04 	ICA KVANTUM LILJ 	 	-360,39	705,45
-12-03-05	12-03-03 	Pressbyran 8106 	 	-200,00	1 065,84
-12-03-05	12-03-03 	ICA SUPERMARKET 	 	-145,04	1 265,84
-12-03-05	12-03-03 	SCIENCE PARK 	 	-495,00	1 410,88
-12-03-05	12-03-03 	SCIENCE PARK 	 	-495,00	1 905,88
-12-03-05	12-03-03 	SJ REGIONAL UPPS 	 	-150,00	2 400,88
-12-03-05	12-03-03 	STORE & COFFEE 	 	-50,00	2 550,88 
--->
             </div>
           </div>
         </div>
@@ -344,21 +326,24 @@
         <h3>Add batch</h3>
       </div>
       <div class="modal-body">
-
-        <div class="control-group">
-          <label class="control-label" for="who">Who</label>
-          <div class="controls">
-            <input type="text" class="input-xlarge" id="who">
-            <!-- <p class="help-block">In addition to freeform text, any HTML5 text-based input appears like so.</p>-->
+        <div id="step1" class="row">
+          <div class="span10">
+            <h2>Copy bank receipt:</h2>
+            <textarea id="paste" type="text" placeholder="Click here and paste"></textarea>
           </div>
         </div>
 
+        <!-- <div class="control-group">-->
+        <!--   <label class="control-label" for="who">Who</label>-->
+        <!--   <div class="controls">-->
+        <!--     <input type="text" class="input-xlarge" id="who">-->
+        <!--   </div>-->
+        <!-- </div>-->
 
-        <div id="ExpensesView"></div>
-        <textarea placeholder="Paste here"></textarea>
+
       </div>
       <div class="modal-footer">
-        <a class="btn btn-primary">Save changes</a>
+        <!-- <a class="btn btn-primary">Save changes</a>-->
         <a class="btn">Close</a>
       </div>
     </script>
@@ -394,6 +379,7 @@
     <script src="/assets/js/bootstrap-typeahead.js"></script>
     <script src="/assets/js/jquery-ui-1.8.18.custom.min.js"></script>
 
+
     <!-- FIXME: not using these, right? -->
     <script src="/assets/js/synapse.js"></script>
     <script src="/assets/js/synapse/core.js"></script>
@@ -405,6 +391,7 @@
     <script src="/js/models.js"></script>
     <script src="/js/script.js"></script>
     <script src="/js/parser.js"></script>
+
 
     <script>
       function test() {

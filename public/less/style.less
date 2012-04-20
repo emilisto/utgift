@@ -66,12 +66,12 @@ table.expenses {
     }
 
     // Column widths
-    @wSelect: 20px;
-    @wDate: 40px;
-    @wLabel: 230px;
-    @wAmount: 50px;
-    @wCategory: 60px;
-    @wWho: 40px;
+    @wSelect   : 20px;
+    @wDate     : 40px;
+    @wLabel    : 230px;
+    @wAmount   : 50px;
+    @wCategory : 60px;
+    @wWho      : 40px;
 
     td[rel="select"],
     th[rel="select"] {
@@ -178,15 +178,40 @@ i.icon-dots {
 
 
 #modal-add-batch.modal {
-  margin-top: -400px;
-  max-height: 750px;
+  top: 50px;
+  margin: 0 0 0 -400px;
   width: 800px;
-  margin: -400px 0 0 -380px;
+  // height: 600px;
 
-  textarea {
-    width: 100%;
-    height: 35px;
+  .modal-header {
+    height: 22px;
   }
+  input {
+    margin: 10px 0px;
+  }
+
+  h2 {
+    float: left;
+    margin-right: 10px;
+  }
+
+  textarea#paste {
+    width: 200px;
+    height: 30px;
+    text-align: center;
+    float: left;
+    resize: none;
+    line-height: 30px;
+    font-size: 16px;
+  }
+
+  #step2 { display: block; }
+  // #step1 { display: none; }
+
+  #ExpensesView {
+    display: none;
+  }
+
   table {
     width: 100%;
   }

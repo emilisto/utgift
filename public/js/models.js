@@ -106,7 +106,7 @@
       this.each(this._indexedAdd);
     },
     _indexedChange: function(attr, model, val) {
-      val = val || 'Unspecified';
+      val = (val !== undefined) ? val : 'Unspecified';
 
       var values = this._attributeValues[attr];
       var prev = model._previousAttributes[attr];
@@ -204,6 +204,8 @@
       throw "options.parent must be an IndexedCollection";
     }
 
+    this._update = _.debounce(this._update, 50);
+
     var parent = this._parent = options.parent;
 
     this._filters = {};
@@ -214,6 +216,8 @@
     parent.bind('add', this._update);
     parent.bind('reset', this._update);
     parent.bind('all', this._proxyEvents);
+    parent.bind('index:add', this._update);
+    parent.bind('index:remove', this._update);
 
 
     this._update();
@@ -232,6 +236,7 @@
       var currentCids = _.keys(this._byCid);
       var newCids = this._parent.getModelCids(this._filters);
 
+      console.log('update!');
       var toRemove = _.difference(currentCids, newCids);
       var toAdd = _.difference(newCids, currentCids);
 
@@ -378,7 +383,8 @@
       amount: 0,
       who: '',
       label: 'Unspecified',
-      category: 'Misc'
+      category: 'Misc',
+      selected: false
     },
 
     get: function(attr) {
@@ -403,7 +409,7 @@
   });
 
   this.ExpenseList = IndexedCollection.extend({
-    indexedAttrs: [ 'who', 'category', 'period' ],
+    indexedAttrs: [ 'who', 'category', 'period', 'selected' ],
 
     model: Expense,
     compareAttr: 'date',

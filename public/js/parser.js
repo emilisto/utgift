@@ -1,4 +1,5 @@
 (function(global) {
+  var _ = global._;
 
   if (!_ && typeof require !== 'undefined') {
     _ = require('underscore');
@@ -23,7 +24,7 @@
         'date': this.parseDate(matches[2]),
         'label': matches[3],
         'amount': -parseFloat(amount, 10)
-      }
+      };
     }
 
     return ret;
@@ -54,4 +55,3 @@
   if(typeof module !== 'undefined') module.exports = AccountParser;
 
 }(this));
-

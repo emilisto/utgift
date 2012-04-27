@@ -195,14 +195,18 @@ this.ExpenseView = Backbone.View.extend({
 });
 
 this.ClassFilterView = Backbone.View.extend({
-  tagName: 'ul',
-  className: 'nav nav-pills nav-stacked',
+
+  template: _.template( $('#class-filter-template').html() ),
+  className: 'class-filter',
+  //className: 'nav nav-pills nav-stacked',
+
   events: {
-    'click li': 'clickClass'
+    'click li': 'clickClass',
+    'click .btn.main': 'clickMain'
   },
 
   initialize: function(options) {
-    _.bindAll(this, 'render', 'clickClass', 'setFilter', 'clearFilter', 'checkEmpty');
+    _.bindAll(this, 'render', 'clickClass', 'setFilter', 'clearFilter', 'checkEmpty', 'clickMain');
 
     options = options || {};
 
@@ -224,6 +228,14 @@ this.ClassFilterView = Backbone.View.extend({
     this.render();
   },
 
+  clickMain: function() {
+    if(this._currentFilter) {
+      this.clearFilter();
+    } else {
+      $('.btn.btn-toggle', this.el).click();
+    }
+  },
+
   checkEmpty: function(attr) {
     if(attr === this.attr) this.clearFilter();
   },
@@ -235,8 +247,12 @@ this.ClassFilterView = Backbone.View.extend({
 
     if(this._currentFilter !== value) {
       this.collection.setFilter(this.attr, value);
+
+      $(this.el).addClass('active');
       $('li', this.el).removeClass('active');
       $li.addClass('active');
+      $('.btn.main', this.el).html(value);
+
       this._currentFilter = value;
 
     }
@@ -244,6 +260,9 @@ this.ClassFilterView = Backbone.View.extend({
   clearFilter: function() {
     this.collection.clearFilter(this.attr);
     $('li', this.el).removeClass('active');
+    $(this.el).removeClass('active');
+
+    $('.btn.main', this.el).html(this.label);
     this._currentFilter = null;
   },
 
@@ -259,22 +278,16 @@ this.ClassFilterView = Backbone.View.extend({
   },
 
   render: function() {
-    var html = '<li class="nav-header">' + this.label + '</li>';
-
     var classes = this.collection.getValues(this.attr);
-
-    // FIXME: quick and dirty sorting
-    classes.reverse();
-
-    _.each(classes, function(className) {
-      html += '<li><a href="#" rel="' + className + '">' + className + '</a></li>\n';
-    });
-
-    $(this.el).html(html);
 
     if(this._currentFilter) {
       $('a[rel="' + this._currentFilter + '"]', this.el).parent('li').addClass('active');
     }
+
+    $(this.el).html( this.template({
+      label: this.value || this.label,
+      classes: classes
+    }));
 
     this.delegateEvents();
   }
@@ -293,9 +306,14 @@ this.SelectedView = Backbone.View.extend({
   },
 
   initialize: function(parent) {
-    _.bindAll(this, 'updateSelections', 'selectOne', 'render', 'saveAll', 'cancel', 'removeAll');
+    _.bindAll(this, 'updateSelections', 'selectOne', 'render', 'saveAll', 'cancel', 'removeAll',
+                    '_loadTypeAhead');
 
     this.collection = new Backbone.Collection();
+
+    this._loadTypeAhead = _.debounce(this._loadTypeAhead, 50);
+    Expenses.on('index:created', this._loadTypeAhead);
+    Expenses.on('index:emptied', this._loadTypeAhead);
 
     this.on('expense:select', this.selectOne);
 
@@ -309,7 +327,7 @@ this.SelectedView = Backbone.View.extend({
   },
 
 
-  keys:  [ 'label', 'amount', 'category', 'who' ],
+  keys:  [ 'label', 'amount', 'category', 'who', 'date' ],
 
   updateSelections: function() {
     var self = this;
@@ -331,6 +349,13 @@ this.SelectedView = Backbone.View.extend({
 
     _.each(this.keys, function(key) {
       var vals = coll.pluck(key);
+
+      if(key === 'date') {
+        vals = _.map(vals, function(date) {
+          return date.format('d mmm -yy');
+        });
+      }
+
       var unique = _.uniq(vals);
       if(unique.length === 1) identical[key] = vals[0];
     });
@@ -363,6 +388,16 @@ this.SelectedView = Backbone.View.extend({
     var values = {};
     _.each(this.keys, function(key) {
       var val = $('input[name="' + key + '"]', self.el).val();
+
+      if(key === 'date') {
+
+        // FIXME: this is horribly error-prone, date format is assumed in 18 different places,
+        //         - do some systematic date-handling damnit.
+        var parts = val.match(/(\d+) (\w+) -(\d+)/);
+        var dateStr = parts[1] + ' ' + parts[2] + ' 20' + parts[3];
+        val = new Date(dateStr);
+      }
+
       if(val) values[key] = val;
     });
 
@@ -376,9 +411,23 @@ this.SelectedView = Backbone.View.extend({
     var models = Array.prototype.slice.call(this.collection.models);
     _.each(models, function(model) { model.destroy(); });
   },
+  _loadTypeAhead: function() {
+    $('input[name="category"]', this.el).typeahead({
+      source: Expenses.getValues('category')
+    });
+    $('input[name="who"]', this.el).typeahead({
+      source: Expenses.getValues('who')
+    });
+  },
   render: function() {
     $(this.el).html( this.template());
     this.delegateEvents();
+
+
+    $('input[name="date"]', this.el).datepicker({
+      dateFormat: 'd M -y'
+    });
+
   }
 
 });

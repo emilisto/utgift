@@ -144,7 +144,6 @@ i.icon-dots {
   }
 }
 
-
 #search {
   input {
     z-index: 1;
@@ -213,5 +212,29 @@ i.icon-dots {
   & > .btn {
     float: right;
     margin: 5px;
+  }
+}
+
+#filters {
+  h2 {
+    // margin-left: -10px;
+  }
+  div.class-filter {
+
+    &.active {
+      .btn {
+        .btn-primary();
+      }
+      &:hover .btn {
+        .btn-danger();
+      }
+    }
+
+    margin: 10px 0px;
+    // width: 90px;
+
+    .btn.main {
+      width: 105px;
+    }
   }
 }

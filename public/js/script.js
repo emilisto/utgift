@@ -115,7 +115,7 @@ this.ExpenseView = Backbone.View.extend({
     if($target.parents('.ui-datepicker').length) return;
     if($target.parents('.typeahead').length) return;
 
-    this.cancelEdit();
+    this.save();
   },
 
   cancelEdit: function() {

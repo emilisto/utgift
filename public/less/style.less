@@ -63,6 +63,10 @@ table.expenses {
     a.btn-save { display: none; }
 
     &.editable {
+      td {
+        // padding: 6px;
+        overflow: hidden;
+      }
       span { display: none; }
       input[type="text"] { display: inline; }
 
@@ -73,39 +77,55 @@ table.expenses {
 
     // Column widths
     @wSelect   : 20px;
-    @wDate     : 40px;
+    @wDate     : 70px;
     @wLabel    : 230px;
-    @wAmount   : 50px;
-    @wCategory : 60px;
-    @wWho      : 40px;
+    @wAmount   : 80px;
+    @wCategory : 80px;
+    @wWho      : 70px;
+
+    @padding   : 8px;
+
+    td, th {
+      padding: @padding;
+    }
 
     td[rel="select"],
     th[rel="select"] {
       span, input { width: @wSelect; }
     }
-    td[rel="date"] {
+    td[rel="date"],
+    th[rel="date"] {
+      width: @wDate;
       span, input {
-        width: @wDate;
+        width: @wDate - 2*@padding;
       }
     }
-    td[rel="label"] {
+    td[rel="label"],
+    th[rel="label"] {
+      width: @wLabel;
       span, input {
-        width: @wLabel;
+        width: @wLabel - 2*@padding;
       }
     }
+    th[rel="amount"],
     td[rel="amount"] {
+      width: @wAmount;
       span, input {
-        width: @wAmount;
+        width: @wAmount - 2*@padding;
       }
     }
+    th[rel="category"],
     td[rel="category"] {
+      width: @wCategory;
       span, input {
-        width: @wCategory;
+        width: @wCategory - 2*@padding;
       }
     }
+    th[rel="who"],
     td[rel="who"] {
+      width: @wWho;
       span, input {
-        width: @wWho;
+        width: @wWho - 2*@padding;
       }
     }
   }

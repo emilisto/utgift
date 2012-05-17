@@ -497,6 +497,9 @@ this.ExpensesView = Backbone.View.extend({
     this.collection.sortAttr = 'date';
     this.collection.sort();
 
+    console.log(this.collection);
+    window.coll = this.collection;
+
     this.updateSelectAll = _.debounce(this.updateSelectAll, 50);
     this.on('expense:select', this.updateSelectAll);
     this.collection.on('add remove reset', this.updateSelectAll);
@@ -607,11 +610,10 @@ this.ExpensesView = Backbone.View.extend({
 
     if(columns.indexOf(col) >= 0) {
       // Toggle sorting order if clicking twice on same column
-      this.reverseSort = coll.sortAttr === col ? (!this.reverseSort) : false;
-      var opts = { reverse: this.reverseSort };
-      this.collection.sortAttr = col;
+      coll.sortReverse = coll.sortAttr === col ? (!coll.sortReverse) : false;
+      coll.sortAttr = col;
 
-      this.collection.sort(opts);
+      this.collection.sort();
     }
   },
 
@@ -768,7 +770,7 @@ this.ExpensesView = Backbone.View.extend({
 
     if(this.collection.sortAttr) {
       var sortColSelector = 'thead th[rel="' + this.collection.sortAttr + '"]';
-      var upOrDown = this.reverseSort ? 'down' : 'up';
+      var upOrDown = this.collection.sortReverse ? 'down' : 'up';
       $(sortColSelector + ' .icon-chevron-' + upOrDown, this.el).css('display', 'inline-block');
     }
 

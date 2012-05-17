@@ -253,18 +253,21 @@
 
       Backbone.Collection.prototype.sort.call(this, _.extend({}, options, { silent: true }));
       // Reverse logic: default sorting is descending, i.e. Z-A, we want A-Z per default.
-      if(!options.reverse) this.models.reverse();
+      if(!this.sortReverse) this.models.reverse();
       if (!options.silent) this.trigger('reset', this, options);
 
       return this;
     },
     comparator: function(model) {
-      var attrs = [
-        this.sortAttr ?  model.get(this.sortAttr) : 1,
-        model.cid
-      ];
+      var val = (this.sortAttr ?  model.get(this.sortAttr) : '');
 
-      return attrs;
+      // Append cid to comparator value to make sure all values are unique,
+      // otherwise some models will be sorted randomly for each sort() call
+      var appendix = model.cid.replace(/[^0-9]/, '');
+      if(_.isDate(val)) val = val.getTime();
+      val += (_.isNumber(val) ? parseInt(appendix) : appendix);
+
+      return val;
     },
 
     _proxyEvents: function(eventName) {

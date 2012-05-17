@@ -51,7 +51,6 @@ this.ExpenseView = Backbone.View.extend({
     if(this._selected) {
       this._selected = false;
       this.trigger('select', false);
-      console.log('deselected!');
       this.model.set({ 'selected': false });
       this.render();
     }
@@ -62,7 +61,6 @@ this.ExpenseView = Backbone.View.extend({
       var state = $('input[type="checkbox"]', self.el).is(':checked');
       self._selected = state;
       self.trigger('select', state);
-      console.log('triggering!');
 
       self.model.set({ 'selected': state });
     });
@@ -376,13 +374,15 @@ this.SelectedView = Backbone.View.extend({
     });
   },
   selectOne: function(view, state) {
+    var collModel = this.collection.getByCid(view.model.cid);
+
     if(state) {
-      if(!this.collection.get(view.model)) {
+      if(!collModel) {
         this._views[view.model.cid] = view;
         this.collection.add(view.model);
       }
     } else {
-      if(this.collection.get(view.model)) {
+      if(collModel) {
         delete this._views[view.model.cid];
         this.collection.remove(view.model);
       }
@@ -390,12 +390,10 @@ this.SelectedView = Backbone.View.extend({
   },
 
   btnSave: function() {
-    console.log('btnSave!');
     this.save();
   },
   btnDeselectAll: function() {
     _.each(this._views, function(view) {
-      console.log('deselect!');
       view.deselect();
     });
   },
@@ -671,8 +669,6 @@ this.ExpensesView = Backbone.View.extend({
     if(this.hasMore()) {
       this._pageSize += this._pageIncrement;
       this.render();
-    } else {
-      console.log('emptied!');
     }
   },
   resetPagination: function() {
@@ -730,11 +726,8 @@ this.ExpensesView = Backbone.View.extend({
     if(!view) {
       view = new ExpenseView({ model: model, parent: this });
 
-      console.log('meeeep');
       // Proxy events from view
       view.on('all', function(eventName) {
-        if(window.loggit) console.log('event: %s %o', eventName, arguments);
-
         var args = Array.prototype.slice.call(arguments, 1);
         args = [ 'expense:' + eventName, view ].concat(args);
         self.trigger.apply( self, args);
@@ -912,7 +905,6 @@ this.AppView = Backbone.View.extend({
   showTab: function(ev) {
 
     var rel = $(ev.target).attr('rel');
-    console.log(rel);
     if(rel === 'selected') {
       this.filteredExpenses.setFilter('selected', true);
     } else {

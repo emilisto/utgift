@@ -259,8 +259,12 @@
       return this;
     },
     comparator: function(model) {
-      return this.sortAttr ?
-        model.get(this.sortAttr) : 1;
+      var attrs = [
+        this.sortAttr ?  model.get(this.sortAttr) : 1,
+        model.cid
+      ];
+
+      return attrs;
     },
 
     _proxyEvents: function(eventName) {

@@ -470,8 +470,8 @@ this.ExpensesView = Backbone.View.extend({
   initialize: function(parent) {
     if(!this.collection) throw "must supply collection";
 
-    _.bindAll(this, 'addOne', 'resetViews', 'render', 'sortColumn', 'filter', 'filterOne',
-                    'refreshFilter', 'updateSelectAll', 'clickSelectAll', 'cancelPreviousEdit',
+    _.bindAll(this, 'addOne', 'resetViews', 'render', 'sortColumn', 'search', 'filterOne',
+                    'refreshSearch', 'updateSelectAll', 'clickSelectAll', 'cancelPreviousEdit',
                     '_clearFilterCache', 'resetPagination', 'isEditing', 'selectAll', 'deselectAll');
 
     this._views = {};
@@ -505,6 +505,8 @@ this.ExpensesView = Backbone.View.extend({
 
     this.collection.on('filter:clear filter:set', this._clearFilterCache);
     this.collection.on('filter:clear filter:set', this.resetPagination);
+    this.collection.on('filter:clear filter:set', this.refreshSearch);
+
     this.on('search', this.resetPagination);
 
     var view = this;
@@ -615,39 +617,37 @@ this.ExpensesView = Backbone.View.extend({
 
   //////////////////
   // Search
+  //
+  // TODO: clarify this and how it interacts with filters
+  //
 
-  refreshFilter: _.debounce(function() {
-    if(this._currentFilter) this.filter(this._currentFilter);
+  refreshSearch: _.debounce(function() {
+    if(this._currentFilter) this.search(this._currentFilter);
   }, 100),
-  _currentFilter: null,
-  filter: function(str) {
+  _currentSearch: null,
+  search: function(str) {
     var view = this;
     var views = this._views;
 
     if(str) {
       this.trigger('search', str);
 
-      this._currentFilter = str;
+      this._currentSearch = str;
       this.collection.each(function(model) {
-        // var $el = $(views[model.cid].el);
-        //matches ? $el.addClass('matching').show() : $el.removeClass('matching').hide();
-
         model.matches = view.filterOne(model, str);
 
       });
     } else {
       this.collection.each(function testing(model) { delete model.matches; });
-      this._currentFilter = '';
+      this._currentSearch = '';
     }
 
     this.render();
-    // this._updateTotal();
-    // this.updateSelectAll();
   },
 
   filterOne: function(model) {
     var fields = [ 'who', 'label', 'category' ];
-    var str = this._currentFilter;
+    var str = this._currentSearch;
 
     if(!str) return true;
 
@@ -681,15 +681,13 @@ this.ExpensesView = Backbone.View.extend({
     this._filterCache = {};
   },
   filterModels: function() {
-    if(this._currentFilter) {
+    if(this._currentSearch) {
 
-      if(!this._filterCache[this._currentFilter]) {
-        this._filterCache = {};
-        var models = this.collection.filter(function(model) { return model.matches; });
-        this._filterCache[this._currentFilter] = models;
-      }
+      this._filterCache = {};
+      var models = this.collection.filter(function(model) { return model.matches; });
+      this._filterCache[this._currentSearch] = models;
 
-      return this._filterCache[this._currentFilter];
+      return this._filterCache[this._currentSearch];
     } else {
       return Array.prototype.slice.call(this.collection.models);
     }
@@ -1005,7 +1003,7 @@ this.AppView = Backbone.View.extend({
     } else {
       $('#search', this.el).removeClass('active');
     }
-    this.expensesView.filter(str);
+    this.expensesView.search(str);
   }, 50),
 
 

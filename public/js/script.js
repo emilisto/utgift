@@ -347,10 +347,14 @@ this.SelectedView = Backbone.View.extend({
     // Show panel if n >= 1
     if(!n) {
       $('#edit-all', this.el).slideUp();
+      this.trigger('hide');
       return;
     }
 
-    $('#edit-all', this.el).slideDown();
+    if(!$('#edit-all', this.el).is(':visible')) {
+      $('#edit-all', this.el).slideDown();
+      this.trigger('show');
+    }
 
     // Find values common to all selected rows
     var identical = {};
@@ -901,6 +905,7 @@ this.AppView = Backbone.View.extend({
 
   showSelected: function() {
     $('#tabbar li a[rel="selected"]', this.el).click();
+
   },
   showTab: function(ev) {
 
@@ -917,20 +922,29 @@ this.AppView = Backbone.View.extend({
     _.bindAll(this, 'render', 'create', 'showAddBatch', 'search', 'cancelSearch', 'editCategory',
                     'clearFilters', 'showTab', 'showSelected');
 
+    var view = this;
+
     this.collection = Expenses;
-    this.filteredExpenses = window.Filtered = new FilteredCollection([], {
+    this.filteredExpenses = new FilteredCollection([], {
       parent: Expenses
     });
-
-    // this.filteredExpenses.bind('all', function(ev) {
-    //   console.log('expenses: %s %o', ev, arguments);
-    // });
 
     this.expensesView = new ExpensesView({ collection: this.filteredExpenses });
 
     // FIXME: maybe do Dependency Injection of ExpensesView here?
     this.selectedView = new SelectedView();
     this.expensesView.on('expense:select', this.selectedView.selectOne);
+
+    // Add space below ExpensesView so one can see the bottom-most expenses
+    // even when SelectedView is shown, covering approx ~220 px of the bottom.
+      this.selectedView.on('show', function() {
+        $('#ExpensesView', view.el).css({ 'margin-bottom': '220px' });
+      });
+      this.selectedView.on('hide', function() {
+        console.log('hidden!');
+        $('#ExpensesView', view.el).css({ 'margin-bottom': '10px' });
+      });
+
 
     // Aggregation
       this.aggregatedCollection = new AggregateCollection({ collection: Expenses });
@@ -950,7 +964,7 @@ this.AppView = Backbone.View.extend({
         collection: this.filteredExpenses
       });
 
-      // FIXME: make subclass MonthFilterView of ClassFilterView to 
+      // FIXME: make subclass MonthFilterView of ClassFilterView to
       // sort properly and enable expand/collapse of months
       this.monthFilter = new ClassFilterView({
         label: 'Months',
@@ -959,8 +973,6 @@ this.AppView = Backbone.View.extend({
       });
 
       this.filters = [ this.monthFilter, this.categoryFilter, this.whoFilter ];
-
-    window.av = this;
 
     this.render();
 

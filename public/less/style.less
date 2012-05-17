@@ -55,6 +55,11 @@ table.expenses {
       }
     }
 
+    td[rel="amount"] {
+      text-align: right;
+      span { margin-right: 10px; }
+    }
+
     // State: normal or .editable
     span { display: inline; }
     input[type="text"] { display: none; }
@@ -78,10 +83,10 @@ table.expenses {
     // Column widths
     @wSelect   : 20px;
     @wDate     : 70px;
-    @wLabel    : 230px;
-    @wAmount   : 80px;
-    @wCategory : 80px;
-    @wWho      : 70px;
+    @wLabel    : 240px;
+    @wAmount   : 85px;
+    @wCategory : 75px;
+    @wWho      : 60px;
 
     @padding   : 8px;
 

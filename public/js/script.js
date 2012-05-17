@@ -182,7 +182,10 @@ this.ExpenseView = Backbone.View.extend({
         var parts = val.match(/(\d+) (\w+) -(\d+)/);
         var dateStr = parts[1] + ' ' + parts[2] + ' 20' + parts[3];
         val = new Date(dateStr);
-      } 
+      } else if(name === 'amount') {
+        val = parseFloat(val.replace(/[^0-9.]/, ''));
+        console.log('fixed val: %d', val);
+      }
 
       attrs[name] = val;
 
@@ -202,6 +205,9 @@ this.ExpenseView = Backbone.View.extend({
 
     var date = new Date(this.model.get('date'));
     json.date = date.format('d mmm -yy');
+
+    json.amount = accounting.formatNumber(json.amount, 2, " ");
+
     $(this.el).html( this.template(json) );
   }
 

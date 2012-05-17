@@ -6,10 +6,16 @@ body {
 
 .modal { display: none; }
 
-#add.btn-group {
-  margin: 10px 0px;
+.top-bar {
+  #search {
+    margin: 10px 0px;
+    float: left;
+  }
+  #add.btn-group {
+    float: right;
+    margin: 10px 0px;
+  }
 }
-
 table.expenses {
   width: 750px;
 
@@ -115,32 +121,30 @@ i.icon-dots {
 
 #pagination th {
   cursor: pointer;
-  // .clearfix();
+  text-align: center;
 
   p, a {
-    display: block;
-    float: left;
+    display: inline;
     line-height: 30px;
-    margin: 0px 10px;
   }
   .progress {
+    margin: 0px auto;
     width: 250px;
-    float: left;
     height: 30px;
-    margin-bottom: 0px;
     .bar {
       background-color: #0E90D2;
       height: 30px;
       .transition(none);
     }
   }
+
   #no-more { display: none; }
   &.no-more {
     .progress .bar {
       background-color: #CCC;
     }
     #more { display: none; }
-    #no-more { display: block; }
+    #no-more { display: inline; }
   }
 }
 
@@ -179,8 +183,8 @@ i.icon-dots {
 
 #modal-add-batch.modal {
   top: 50px;
-  margin: 0 0 0 -400px;
-  width: 800px;
+  margin: 0 0 0 -200px;
+  width: 500px;
   // height: 600px;
 
   .modal-header {
@@ -196,13 +200,17 @@ i.icon-dots {
   }
 
   textarea#paste {
-    width: 200px;
-    height: 30px;
+    width: 400px;
+    height: 50px;
+    line-height: 50px;
     text-align: center;
     float: left;
     resize: none;
-    line-height: 30px;
     font-size: 16px;
+    border: 2px dashed #aaa;
+    outline: none;
+    &:focus { outline: none; }
+    color: #aaa;
   }
 
   #step2 { display: block; }

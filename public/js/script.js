@@ -309,14 +309,15 @@ this.SelectedView = Backbone.View.extend({
   template: _.template( $('#selected-template').html() ),
 
   events: {
-    'click .btn-save-all': 'saveAll',
-    'click .btn-cancel': 'cancel',
+    'click .btn-save-all': 'btnSave',
+    'click .btn-restore': 'btnRestore',
+    'click .btn-deselect-all': 'btnDeselectAll',
     'click .btn-remove-all': 'removeAll'
   },
 
   initialize: function(parent) {
-    _.bindAll(this, 'updateSelections', 'selectOne', 'render', 'saveAll', 'cancel', 'removeAll',
-                    '_loadTypeAhead');
+    _.bindAll(this, 'updateSelections', 'selectOne', 'render', 'save', 'removeAll',
+                    '_loadTypeAhead', 'btnSave', 'btnRestore', 'btnDeselectAll');
 
     this.collection = new Backbone.Collection();
 
@@ -344,8 +345,6 @@ this.SelectedView = Backbone.View.extend({
 
     var n = coll.length;
     $('#edit-all h2', this.el).html(n + ' selected');
-
-    console.log('selected: %d', n);
 
     // Show panel if n >= 1
     if(!n) {
@@ -389,13 +388,22 @@ this.SelectedView = Backbone.View.extend({
       }
     }
   },
-  cancel: function() {
+
+  btnSave: function() {
+    console.log('btnSave!');
+    this.save();
+  },
+  btnDeselectAll: function() {
     _.each(this._views, function(view) {
       console.log('deselect!');
       view.deselect();
     });
   },
-  saveAll: function() {
+  btnRestore: function() {
+    this.updateSelections();
+  },
+
+  save: function() {
     var self = this;
     var values = {};
     _.each(this.keys, function(key) {
@@ -418,8 +426,6 @@ this.SelectedView = Backbone.View.extend({
     this.collection.each(function(model) {
       model.save(values);
     });
-
-    this.cancel();
   },
   removeAll: function() {
     var models = Array.prototype.slice.call(this.collection.models);
@@ -1169,7 +1175,7 @@ $(function(){
 
   window.app = app;
 
-  // app.showAddBatch();
+  //app.showAddBatch();
 
 });
 

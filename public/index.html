@@ -85,9 +85,6 @@
               <a href="#" class="" id="more">Show more</a>
               <p id="no-more">Showing all</p>
             </th>
-            <!-- <th colspan="7">-->
-            <!--   <i class="icon-dots"></i>-->
-            <!-- </th>-->
           </tr>
           <tr class="total">
             <th colspan="3">
@@ -103,6 +100,9 @@
     <script type="text/handlebar-template" id="selected-template">
       <div id="edit-all" class="well">
         <h2>0 Selected</h2>
+        <a class="btn-deselect-all btn">
+          Deselect all
+        </a>
         <a class="btn-remove-all btn btn-danger btn-remove">
           <i class="icon-white icon-minus"></i>
           Remove all
@@ -147,8 +147,8 @@
                 <input type="text" name="who" value="" />
               </td>
               <td>
-                <a class="btn-save-all btn btn-primary">Save all</a>
-                <a class="btn-cancel btn">Cancel</a>
+                <a class="btn-save-all btn btn-primary">Save</a>
+                <a class="btn-restore btn">Restore</a>
               </td>
             </tr>
           <tbody>

@@ -241,11 +241,12 @@ this.ClassFilterView = Backbone.View.extend({
     this.render();
   },
 
-  clickMain: function() {
+  clickMain: function(ev) {
     if(this._currentFilter) {
       this.clearFilter();
     } else {
-      $('.btn.btn-toggle', this.el).click();
+      $('.btn-group', this.el).toggleClass('open');
+      ev.stopPropagation();
     }
   },
 

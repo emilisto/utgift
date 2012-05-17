@@ -124,6 +124,8 @@ this.ExpenseView = Backbone.View.extend({
     $('html').off('click', this._clickOutside);
   },
   edit: function(field) {
+    var self = this;
+
     this.trigger('editing');
     this.editing = true;
 
@@ -141,7 +143,11 @@ this.ExpenseView = Backbone.View.extend({
     });
 
     $('input[name="date"]', this.el).datepicker({
-      dateFormat: 'd M -y'
+      dateFormat: 'd M -y',
+      onClose: function() {
+        var td = $('td[rel="date"]', self.el).next('td').children('input');
+        td.focus();
+      }
     });
 
     // If user clicks outside the row, cancel edit

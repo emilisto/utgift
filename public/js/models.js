@@ -426,42 +426,4 @@
     url: '/expenses'
   });
 
-  this.FilteredExpenses = Backbone.Subset.extend({
-    initialize: function() {
-      _.bindAll(this, 'sieve', 'addSieve', 'removeSieve', 'clearSieves', 'refresh');
-
-      this._sieves = [];
-    },
-    parent: function() {
-      return this._parent;
-    },
-
-    sieve: function(model) {
-      return _.all(
-        _.map(this._sieves, function(sieve) {
-          return sieve(model);
-        }),
-        _.identity
-      );
-    },
-
-    addSieve: function(fn) {
-      this._sieves.push(fn);
-      this.refresh();
-    },
-    removeSieve: function(fn) {
-      this._sieves = _.without(this._sieves, fn);
-      this.refresh();
-    },
-    clearSieves: function() {
-      this._sieves = [];
-      this.refresh();
-    },
-
-    refresh: function() {
-      this._resetSubset(this.parent().models);
-    }
-
-  });
-
 } (this));

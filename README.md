@@ -35,7 +35,7 @@ categorize expenses.
 
 ## Credits
 
-* Emil Steqnvis, @emilisto
+* Emil Stenqvist, @emilisto
 
 ## Todo
 * Clean up the search / filter mechanisms; unify them. Right now the `IndexedCollection` was 
